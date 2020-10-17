@@ -1,0 +1,24 @@
+
+
+- como esperar o ciclista da frente
+    -> ponteiros p/ ciclista
+    -> lista ligada (circular?)
+
+- como ter a info da velocidade do ciclista da frente
+
+
+- guardar a última velocidade do ciclista
+- o que fazer com arrive e continue de uma thread que foi destruída (eliminado, ou quebra)
+- velocidades nas duas últimas
+-----------------------------------------
+- Caso a pista estiver bloqueada e a ultrapassagem é possivel */
+- O que acontece se algum ciclista tiver "andado meia casa" e alguém ocupar a casa à sua frente
+
+Priorização de tasks
+1 - Velocidades
+1.1 - Velocidades
+1.2 - Pensar na 90km/h
+2 -MIss and out
+3 - Problemas da ultrapassagem
+4 - Ultimas voltas
+5 -Fim da corrida
