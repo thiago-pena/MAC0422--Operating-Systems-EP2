@@ -50,19 +50,19 @@ int main(int argc, char const *argv[]) {
     /*Cria os ciclistas e posiciona-os na pista*/
     cab = malloc(sizeof(ciclista));
     cab->prox = cab;
-    int q = n/10;
-    int r = n%10;
-    int numComp = n;
-    if (q > 0 && r == 0) {q--;r = 10;} /*Conserta caso r == 0*/
-    for (int j = q; j > 0; j--) {
-        for(int i = 0; i < 10; i++) {
+    int q = n/5;
+    int r = n%5;
+    int numComp = 1;
+    if (q > 0 && r == 0) { q--;r = 5;} /*Conserta caso r == 0*/
+    for (int j = 0; j < q; j++) {
+        for(int i = 0; i < 5; i++) {
             ciclista *novoCiclista;
             novoCiclista = malloc(sizeof(ciclista));
-            pista[i][j] = novoCiclista;
-            novoCiclista->num = numComp--;
+            pista[i][(d -1) -j] = novoCiclista;
+            novoCiclista->num = numComp++;
             novoCiclista->Pause = 0;
             novoCiclista->Continue = 0;
-            novoCiclista->px = j;
+            novoCiclista->px = d -1 -j;
             novoCiclista->py = i;
             novoCiclista->voltas = 0;
             novoCiclista->prox = cab->prox;
@@ -72,11 +72,11 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < r; i++) {
         ciclista *novoCiclista;
         novoCiclista = malloc(sizeof(ciclista));
-        pista[i][0] = novoCiclista;
-        novoCiclista->num = numComp--;
+        pista[i][d -q -1] = novoCiclista;
+        novoCiclista->num = numComp++;
         novoCiclista->Pause = 0;
         novoCiclista->Continue = 0;
-        novoCiclista->px = 0;
+        novoCiclista->px = d -1 -q;
         novoCiclista->py = i;
         novoCiclista->voltas = 0;
         novoCiclista->prox = cab->prox;
@@ -194,16 +194,34 @@ void * juiz(void * arg)
 
 void vizualizador()
 {
+  for (int j = 0; j < d; j++) {
+    printf("---");
+  }
+  printf("\n");
   for (int i = 0; i < 10; i++) {
       for (int j = 0; j < d; j++) {
-          if (pista[i][j] != NULL) printf(" %02d |",pista[i][j]->num);
-          else printf("    |");
+          if (pista[i][j] != NULL) printf("%02d|",pista[i][j]->num);
+          else printf("  |");
       }
       printf("\n");
       for (int j = 0; j < d; j++) {
-        printf("-----");
+        printf("---");
       }
       printf("\n");
   }
   printf("\n\n\n\n");
 }
+
+// 1 - Velocidades
+// 1.1 - Velocidades
+// 1.2 - Pensar na 90km/h
+
+// 11:11
+// 2 -MIss and out
+
+// 11:16
+// 3 - Problemas da ultrapassagem
+
+// 11:18
+// 4 - Ultimas voltas
+// 5 -Fim da corrida
