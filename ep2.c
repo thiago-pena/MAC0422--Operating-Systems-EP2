@@ -7,11 +7,6 @@
 #define TRUE 1
 #define DEBUG 1
 
-void * competidor(void * arg);
-void * juiz(void * arg);
-void vizualizador();
-pthread_mutex_t mutex;
-
 /*Estrutura correspondente a um ciclista*/
 typedef struct Ciclista ciclista;
 struct Ciclista {
@@ -21,9 +16,27 @@ struct Ciclista {
     int Continue;
     int voltas;
     int velocidade;
+    int meiaVolta;
+    int ultimo;
+    int eliminado;
     pthread_t id;
     ciclista *prox;
 };
+
+/*Thread do ciclista*/
+void * competidor(void * arg);
+
+/*Thread do coordenador de threads*/
+void * juiz(void * arg);
+
+void vizualizador();
+
+/*Calcula probabilidade e muda velocidade*/
+void velocidade(ciclista *p);
+
+/*Elimina último ciclista*/
+ciclista * eliminador(ciclista *c);
+
 /*Variáveis globais*/
 ciclista ***pista;
 ciclista *cab;
@@ -64,7 +77,10 @@ int main(int argc, char const *argv[]) {
             novoCiclista->Continue = 0;
             novoCiclista->px = d -1 -j;
             novoCiclista->py = i;
-            novoCiclista->voltas = 0;
+            novoCiclista->voltas = -1;
+            novoCiclista->meiaVolta = 0;
+            novoCiclista->ultimo = 0;
+            novoCiclista->eliminado = 0;
             novoCiclista->prox = cab->prox;
             cab->prox = novoCiclista;
         }
@@ -78,7 +94,10 @@ int main(int argc, char const *argv[]) {
         novoCiclista->Continue = 0;
         novoCiclista->px = d -1 -q;
         novoCiclista->py = i;
-        novoCiclista->voltas = 0;
+        novoCiclista->voltas = -1;
+        novoCiclista->meiaVolta = 0;
+        novoCiclista->ultimo = 0;
+        novoCiclista->eliminado = 0;
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }
@@ -116,13 +135,25 @@ void * competidor(void * arg)
 {
   int cont;
   ciclista *p =(ciclista *) arg;
-  srand(time(NULL));
+  ciclista* q;
+
   int casas;
   if (DEBUG)printf("Ciclista: %d pronto\n",p->num );
-  while (1) {
-      casas = rand()%2 + 1;
-      p->velocidade = casas;
-      while (casas) {
+  while (!p->eliminado) {
+
+      /*Verefica o ciclista esta com a flag ultimo e ira cruzar a linha*/
+      if (p->ultimo && pista[(p->py)][((p->px) +1)%d] == 0) {
+        p->eliminado = 1; //Eliminado ...sai do loop
+        break;
+      }
+
+      /*Verefica se esta em meia volta: 0.5m*/
+      if (!p->meiaVolta) velocidade(p); //Calcula as probabilidades de velocidade
+      if (p->velocidade == 0) {
+          p->meiaVolta == 1; //se meia volta (30kmh) somente levanta a flag
+
+      } else {
+
           /*Caso 1 a pista estiver livre: avança */
           if (pista[(p->py)][((p->px) +1)%d] == NULL) {
 
@@ -133,17 +164,20 @@ void * competidor(void * arg)
               casas--;
 
           } else {
-
-            cont = 0;
+              /*ATENCAO: existe algum caso nao coberto pelos proximos que faz */
+              /*         com que entre em loop infinito, criei esse cont <20  */
+              /*         para detectar essa situacao ate a gente achar o erro */
+              cont = 0;
               while (pista[(p->py)][((p->px) +1)%d] != NULL && cont < 20) {
                   cont++;
+
                   /*Caso 2 a pista estiver bloqueada com ciclista que já avançou */
                   /* e ultrapassagem não é possivel */
                   if (pista[(p->py)][((p->px) +1)%d] != NULL          &&
                       pista[(p->py)][((p->px) +1)%d]->Pause == 1      &&
                      (pista[((p->py) + 1)%10][((p->px) +1)%d] != NULL ||
                       p->py == 9)) {
-
+                      p->velocidade = 0; //Limita a velocidade para 30,enunciado.
                       casas = 0;
                       break;
 
@@ -157,7 +191,7 @@ void * competidor(void * arg)
 
                       pista[p->py][((p->px) +2)%d] = pista[p->py][p->px];
                       pista[p->py][p->px] = NULL;
-                      p->px = ((p->px) +2)%d;
+                      p->px = ((p->px) +2)%d; //"Pulo" da ultrapassagem
                       if ((p->px)%d == 0) p->voltas = p->voltas + 1;/*Defeito!*/
                       casas--;
                       break;
@@ -166,29 +200,72 @@ void * competidor(void * arg)
                   usleep(1);
               }
           }
-          if (cont > 19) {printf("ciclista %d: travou\n",p->num );casas = 0;}
+          //if (cont > 19) {printf("ciclista %d: travou\n",p->num );casas = 0;}
       }
       p->Pause = 1;
       while (!p->Continue) usleep(1);
       p->Continue = 0;
+  }
+  /*A propria thread faz a eliminacao do ciclista*/
+  if (p->eliminado) {
+      pista[p->py][p->px] = NULL;
+      for (q = cab; q->prox != p ; q = q->prox) {}
+      q->prox = p->prox;
+      free(p);
   }
 }
 
 void * juiz(void * arg)
 {
     if (DEBUG) printf("Juiz está pronto\n");
+
+    ciclista *c =(ciclista *) arg;
+    ciclista *eliminado;
+
+    /*Flags auxiliares*/
+    int menorVolta = 0;
+    int voltas = 0;
+    int atento = 0; //atencao do juiz para cada 2 voltas.
+    int cont = 0;
+
     while (1) {
-      ciclista *p =(ciclista *) arg;
-      for (ciclista * p = cab->prox; p != cab; p = p->prox) {
-          while (!p->Pause) usleep(1);
+
+      for (ciclista * p = c->prox; p != cab; p = p->prox) {
+          while (!p->Pause && !p->eliminado) usleep(1); //!p->eliminado evita a possibilidade de uma thread zumbi travar tudo.
+          if (p->voltas > voltas) {
+              voltas = p->voltas;
+              if (voltas%2 == 0 && voltas > 1) atento = 1; //caso mult2, juiz atento
+          }
           p->Pause = 0;
       }
-      if (DEBUG) printf("Juiz: Todos ciclistas completaram rodada!\n\n");
-      sleep(1);
+
+      /*Caso atento, alguem sera eliminado*/
+      if (atento) {
+          cont = 0;
+          menorVolta = voltas;
+          /*verifica se alguem ficou em ultimo*/
+          for (ciclista * p = c->prox; p != cab; p = p->prox) {
+              if (p->voltas < menorVolta) {
+                  menorVolta = p->voltas;
+                  eliminado = p;
+                  cont = 1; // Caso existir um unico valor menor esse cont permanecera = 1
+              } else if (p->voltas == menorVolta) {
+                  cont = 0; // Caso houver dois ou mais valores menores nao ha ultimo
+              }
+          }
+          if (cont = 1) {
+            eliminado->ultimo = 1; //Levanta a flag de ultimo, a thread fara o resto.
+            atento = 0;
+          }
+      }
+
+      usleep(100000);
       vizualizador();
+      if (DEBUG) printf("Juiz: ...volta: %d\n\n",voltas);
       for (ciclista * p = cab->prox; p != cab; p = p->prox) {
           p->Continue = 1;
       }
+
     }
 }
 
@@ -209,19 +286,19 @@ void vizualizador()
       }
       printf("\n");
   }
-  printf("\n\n\n\n");
+  printf("\n\n");
 }
 
-// 1 - Velocidades
-// 1.1 - Velocidades
-// 1.2 - Pensar na 90km/h
+/*Calcula probabilidade e muda velocidade*/
+void velocidade(ciclista *p)
+{
+    int prob;
+    srand(time(NULL));
+    prob  = rand()%10;
 
-// 11:11
-// 2 -MIss and out
-
-// 11:16
-// 3 - Problemas da ultrapassagem
-
-// 11:18
-// 4 - Ultimas voltas
-// 5 -Fim da corrida
+    if (p->velocidade == 0) {
+        if (prob >= 2) p->velocidade = 1;
+    } else if (p->velocidade == 1) {
+        if (prob < 4) p->velocidade = 0;
+    }
+}
