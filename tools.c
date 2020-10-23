@@ -1,5 +1,5 @@
 
-/* (Pena) Funções para geração de números aleatórios foram copiadas da biblioteca
+/*  Funções para geração de números aleatórios foram copiadas da biblioteca
     utilizada pelo professor Paulo Feofiloff durante a disciplina
     MAC0328 - Algoritmos em Grafos
 */

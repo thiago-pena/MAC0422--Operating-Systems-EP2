@@ -6,7 +6,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <unistd.h>
-    // usleep
+#include "tools.h"
 
 /*Estrutura correspondente a um ciclista*/
 typedef struct Ciclista ciclista;
@@ -16,18 +16,20 @@ struct Ciclista {
     int arrive;
     int Continue;
     int voltas;
-    int velocidade; /* 1: 30km/h, 2: 60km/h; 3: 90km/h */
-    int meiaVolta;
+    int velocidade; // 1: 30km/h, 2: 60km/h; 3: 90km/h
+    int dt;
     int ultimo;
     int eliminado;
     pthread_t id;
     ciclista *prox;
+    bool roundFeito; // cada ciclista indica se seu round já está completo
 };
 
 
 void * competidor(void * arg);
 void * juiz(void * arg);
 void visualizador();
+void visualizadorStderr();
 void velocidade(ciclista *p);
 
 #endif

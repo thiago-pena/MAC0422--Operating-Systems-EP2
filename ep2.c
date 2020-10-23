@@ -9,39 +9,33 @@
     // sleep
 #include <stdbool.h>
 #include "threads.h"
+#include "rank.h"
 
 
 #define TRUE 1
 #define DEBUG 1
 
 
-
-/*Thread do ciclista*/
-// void * competidor(void * arg);
-
-/*Thread do coordenador de threads*/
-// void * juiz(void * arg);
-
-// void visualizador();
-
-/*Calcula probabilidade e muda velocidade*/
-// void velocidade(ciclista *p);
-
-/*Elimina último ciclista*/
-ciclista * eliminador(ciclista *c);
-
-/*Variáveis globais*/
-// ciclista ***pista;
-// ciclista *cab;
-// int d, n;
-extern ciclista ***pista;
-extern ciclista *cab;
-extern int d, n;
+/* Variáveis globais */
+ciclista ***pista;
+ciclista *cab;
+int d, n;
+pthread_mutex_t mutex;
+int maiorVolta, menorVolta;
+long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
+ListaRank L;
+Rank rankFinal;
 
 int main(int argc, char const *argv[]) {
 
     d = atoi(argv[1]);
     n = atoi(argv[2]);
+    pthread_mutex_init(&mutex, NULL);
+
+    // Cria lista de Ranks por volta
+    L = CriaListaRank();
+    // Cria lista de Rank final
+    rankFinal = CriaRank(0, n);
 
     /*Cria pista como uma matriz de ponteiros*/
     pista = malloc(10 * sizeof(ciclista**));
@@ -73,10 +67,11 @@ int main(int argc, char const *argv[]) {
             novoCiclista->Continue = 0;
             novoCiclista->px = d -1 -j;
             novoCiclista->py = i;
-            novoCiclista->voltas = -1;
-            novoCiclista->meiaVolta = 0;
+            novoCiclista->voltas = 0;
             novoCiclista->ultimo = 0;
             novoCiclista->eliminado = 0;
+            novoCiclista->roundFeito = false;
+            novoCiclista->velocidade = 1;
             novoCiclista->prox = cab->prox;
             cab->prox = novoCiclista;
         }
@@ -90,10 +85,11 @@ int main(int argc, char const *argv[]) {
         novoCiclista->Continue = 0;
         novoCiclista->px = d -1 -q;
         novoCiclista->py = i;
-        novoCiclista->voltas = -1;
-        novoCiclista->meiaVolta = 0;
+        novoCiclista->voltas = 0;
         novoCiclista->ultimo = 0;
         novoCiclista->eliminado = 0;
+        novoCiclista->roundFeito = false;
+        novoCiclista->velocidade = 1;
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }
@@ -124,5 +120,9 @@ int main(int argc, char const *argv[]) {
           exit(1);
       }
     }
+
+    printf("Rank final\n");
+    imprimeRankFinal(rankFinal);
+    printf("Fim do ep\n");
     return 0;
 }

@@ -1,160 +1,262 @@
 #include "threads.h"
+#include "rank.h"
 
 #define DEBUG 1
-#include "tools.h"
+#define NSLEEP 100000000 // 0.1s = 1E-1
 
-ciclista ***pista;
-ciclista *cab;
-int d, n;
+// Variáveis globais
+extern ciclista ***pista;
+extern ciclista *cab;
+extern int d, n;
+extern pthread_mutex_t mutex;
+extern long int tempo;
+extern ListaRank L;
+extern Rank rankFinal;
 
-
+// Para números negativos, mod é diferente do resultado do operador resto (%)
+// Foi útil para passar os ciclistas para as pistas mais internas, pois
+// (p->px - 1)%d não dava o resto, mas sim um número negativo.
+int mod(int a, int b)
+{
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
 
 void * competidor(void * arg)
 {
-  int cont;
-  ciclista *p =(ciclista *) arg;
-  ciclista* q;
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
 
-  int casas;
-  if (DEBUG) {
-      printf("Ciclista: %d pronto\n", p->num );
-      fprintf(stderr, "Ciclista: %d pronto\n", p->num);
-  }
-  while (!p->eliminado) {
-      if (true) { // código da tarefa i
-          /*Verifica o ciclista esta com a flag ultimo e ira cruzar a linha*/
-          if (p->ultimo && pista[(p->py)][((p->px) +1)%d] == 0) {
-              p->eliminado = 1; //Eliminado ...sai do loop
-              break;
-          }
-          /*Verifica se esta em meia volta: 0.5m*/
-          if (!p->meiaVolta) velocidade(p); //Calcula as probabilidades de velocidade
-          if (p->velocidade == 0) {
-              p->meiaVolta == 1; //se meia volta (30kmh) somente levanta a flag
+    ciclista *p = (ciclista *) arg;
 
-          } else {
+    if (DEBUG) {
+        printf("Ciclista: %d pronto\n", p->num );
+        if (DEBUG) fprintf(stderr, "Ciclista: %d pronto\n", p->num);
+    }
+    velocidade(p); // Velocidade inicial na primeira volta (30km/h)
+    p->dt = 2 - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
+    while (true) {
+        if (true) { // código da tarefa i
+            if (DEBUG) fprintf(stderr, "\t(0) loop ciclista %d\n", p->num);
+            p->roundFeito = false;
+            int x = p->px;
+            int y = p->py;
+            if (p->dt > 0) { // A velocidade do ciclista requer mais de uma iteração para avançar
+                (p->dt)--;
+                if (DEBUG) fprintf(stderr, "\t(1 else) loop ciclista %d\n", p->num);
+            }
+            else { // A velocidade permite o ciclista avançar a cada iteração
+                if (DEBUG) fprintf(stderr, "\t(1) loop ciclista %d\n", p->num);
+                pthread_mutex_lock(&mutex);
+                if (DEBUG) fprintf(stderr, "\t(LOCK) ciclista %d\n", p->num);
 
-              /*Caso 1 a pista estiver livre: avança */
-              if (pista[(p->py)][((p->px) +1)%d] == NULL) {
+                if (pista[y][(x + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
+                    // anda pra frente
+                    pista[y][(x+1)%d] = p;
+                    pista[y][x] = NULL;
+                    p->px = (x+1)%d;
+                }
+                else { // Caso 1: a posição da frente está ocupada
+                    if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1)\n", p->num);
+                    int j;
+                    bool achouPistaExt = false; // Tem pista externa livre?
+                    bool achouEspacoFrente = false; // Tem espaço na pista da frente?
+                    for (int i = y + 1; i < 10; i++) { // Procura se há pista externa livre
+                        if (pista[i][x] == NULL) {
+                            achouPistaExt = true;
+                            break;
+                        }
+                    }
+                    for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
+                        if (pista[j][(x+1)%d] == NULL) {
+                            achouEspacoFrente = true;
+                            break;
+                        }
+                    }
 
-                  pista[(p->py)][((p->px) +1)%d] = pista[p->py][p->px];
-                  pista[p->py][p->px] = NULL;
-                  p->px = ((p->px) +1)%d;
-                  if ((p->px)%d == 0) p->voltas = p->voltas + 1;
-                  casas--;
+                    // Caso 1.1: ultrapassagem é possível ---> ultrapassa com posição final (j,x+1); j é uma pista externa livre
+                    if (achouPistaExt && achouEspacoFrente) {
+                        if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.1)\n", p->num);
+                        if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.1) j: %d\n", p->num, j);
+                        pista[j][(x+1)%d] = p;
+                        pista[y][x] = NULL;
+                        p->px = (x+1)%d;
+                        p->py = j;
+                    }
+                    else { // Caso 1.2: ultrapassagem não é possível ---> unlock/sleep/lock até o cara da frente terminar o round
+                            // esperar o cara da frente terminar o round leva a livelock (pode ser um cara que avançou e parou ali)
+                            // verificar novamente se é possível ultrapassar
+                            // se realmente não for possível, reduzir a velocidade
+                            int countErros = 0; // Eu fiz temporariamente para achar um livelock (depois eu removo)
+                        while (pista[y][(x+1)%d] != NULL &&
+                            pista[y][(x+1)%d]->roundFeito == false) {
+                                if (DEBUG) fprintf(stderr, "\t(UNLOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito);
+                                pthread_mutex_unlock(&mutex);
+                                nanosleep(&ts, NULL);
+                                pthread_mutex_lock(&mutex);
+                                // if (DEBUG) fprintf(stderr, "\t(LOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito); //GDB SEGFAULT
+                                countErros++;
+                                if (countErros > 100) {
+                                    if (DEBUG) fprintf(stderr, "\t(ERRO) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito);
+                                    visualizadorStderr();
+                                    exit(1);
+                                }
+                        }
+                        if (pista[y][(x+1)%d] == NULL) { // casa da frente liberou
+                            // anda pra frente
+                            pista[y][(x+1)%d] = p;
+                            pista[y][x] = NULL;
+                            p->px = (x+1)%d;
+                        }
+                        else { // casa da frente está ocupada
+                            // não faz nada
+                            if (DEBUG) fprintf(stderr, "\t(ERRO) ciclista %d (Caso 1.2) (VELOCIDADE REDUZIDA -> NÃO ANDOU)\n", p->num);
+                        }
+                    }
+                    if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.1 saída) j: %d\n", p->num, j);
+                }
+                if (DEBUG) fprintf(stderr, "\tciclista %d (saída 2) (%d, %d)\n", p->num, p->py, p->px);
 
-              } else {
-                  /*ATENCAO: existe algum caso nao coberto pelos proximos que faz */
-                  /*         com que entre em loop infinito, criei esse cont <20  */
-                  /*         para detectar essa situacao ate a gente achar o erro */
-                  cont = 0;
-                  while (pista[(p->py)][((p->px) +1)%d] != NULL && cont < 20) {
-                      cont++;
+                // Fim dos casos
+                // Etapas finais da tarefa i
+                if (p->px == 0) { // Verifica se completou uma volta para alterar a velocidade
+                    if (DEBUG) fprintf(stderr, "Ciclista: %d (x == 0), volta: %d\n", p->num, p->voltas);
+                    printf(">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
+                    InsereCiclista(L, n, p->voltas, p->num, tempo);
+                    (p->voltas)++; // completou uma volta ou iniciou a corrida pós largada
+                    velocidade(p);
+                    // @@@ preciso registrar no ranqueamento com um mutex?
+                }
+                p->dt = 2 - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
 
-                      /*Caso 2 a pista estiver bloqueada com ciclista que já avançou */
-                      /* e ultrapassagem não é possivel */
-                      if (pista[(p->py)][((p->px) +1)%d] != NULL          &&
-                      pista[(p->py)][((p->px) +1)%d]->arrive == 1      &&
-                      (pista[((p->py) + 1)%10][((p->px) +1)%d] != NULL ||
-                      p->py == 9)) {
-                          p->velocidade = 0; //Limita a velocidade para 30,enunciado.
-                          casas = 0;
-                          break;
+                // Ao fim de sua movimentação, o ciclista trata de ir para a pista mais interna possível
+                int yMaisInterno = p->py;
+                // Procura se há pista mais interna livre (coloquei para poder pular ciclistas, pois estava gerando livelock1)
+                // V2: verificar na subida se há algum ciclista que vai avançar (ainda não andou, mas dt == 0)
+                for (int i = 0; i < p->py; i++) {
+                    if (DEBUG) fprintf(stderr, "\tciclista %d (loop pista interna) (%d, %d) i:%d\n", p->num, p->py, p->px, i);
+                    if (pista[i][p->px] == NULL && (pista[i][mod(p->px - 1, d)] != NULL && pista[i][mod(p->px - 1, d)]->roundFeito == false &&  pista[i][mod(p->px - 1, d)]->dt == 0)) {
+                        if (DEBUG) fprintf(stderr, "\tciclista %d (loop pista interna) (%d, %d) -> i:%d\n", p->num, p->py, p->px, i);
+                        yMaisInterno = i;
+                        break;
+                    }
+                }
 
-                      }
-                      /*Caso 3 a pista estiver bloqueada e a ultrapassagem é possivel */
-                      else if (pista[(p->py)][((p->px) +1)%d] != NULL          &&
-                      pista[(p->py)][((p->px) +1)%d]->arrive == 1      &&
-                      pista[((p->py) + 1)%10][((p->px) +1)%d] == NULL &&
-                      pista[p->py][((p->px) +2)%d] == NULL            &&
-                      p->py != 9) {
+                if (yMaisInterno < p->py) {
+                    pista[p->py][p->px] = NULL;
+                    pista[yMaisInterno][p->px] = p;
+                    p->py = yMaisInterno;
+                }
+                if (DEBUG) fprintf(stderr, "\t(UNLOCK) ciclista %d\n", p->num);
+                pthread_mutex_unlock(&mutex);
+            }
 
-                          pista[p->py][((p->px) +2)%d] = pista[p->py][p->px];
-                          pista[p->py][p->px] = NULL;
-                          p->px = ((p->px) +2)%d; //"Pulo" da ultrapassagem
-                          if ((p->px)%d == 0) p->voltas = p->voltas + 1;/*Defeito!*/
-                          casas--;
-                          break;
+            p->roundFeito = true;
+            // Teste sleep + subidas ao fim (sem a regra de ver se falta andar)
+            nanosleep(&ts, NULL);
+            pthread_mutex_lock(&mutex);
+            int yMaisInterno = p->py;
+            for (int i = p->py; i >= 0; i--) {
+                if (pista[i][p->px] == NULL) {
+                    yMaisInterno = i;
+                    break;
+                }
+            }
+            if (yMaisInterno < p->py) {
+                pista[p->py][p->px] = NULL;
+                pista[yMaisInterno][p->px] = p;
+                p->py = yMaisInterno;
+            }
+            pthread_mutex_unlock(&mutex);
+        }
 
-                      }
-                      usleep(1);
-                  }
-              }
-              //if (cont > 19) {printf("ciclista %d: travou\n",p->num );casas = 0;}
-          }
-
-      }
-
-      p->arrive = 1;
-      while (!p->Continue) usleep(1);
-      if (DEBUG) fprintf(stderr, "Ciclista: %d, volta: %d, vel: %d\n", p->num, p->voltas, p->velocidade);
-      p->Continue = 0;
-  }
-  /*A propria thread faz a eliminacao do ciclista*/
-  if (p->eliminado) {
-      pista[p->py][p->px] = NULL;
-      for (q = cab; q->prox != p ; q = q->prox) {}
-      q->prox = p->prox;
-      free(p);
-  }
+        // Barreira de sincronização
+        p->arrive = 1;
+        while (!p->Continue) usleep(1);
+        if (DEBUG) fprintf(stderr, "(Continue) Ciclista: %d, volta: %d, vel: %d\n", p->num, p->voltas, p->velocidade);
+        p->Continue = 0;
+    }
   return NULL;
 }
-
 
 void * juiz(void * arg)
 {
     if (DEBUG) printf("Juiz está pronto\n");
 
     ciclista *c =(ciclista *) arg;
-    ciclista *eliminado;
 
     /*Flags auxiliares*/
-    int menorVolta = 0;
-    int voltas = 0;
-    int atento = 0; //atencao do juiz para cada 2 voltas.
-    int cont = 0;
+    int minVolta = 0; // Mínimo das voltas locais dos ciclistas
+    int maxVolta = 0; // Máximo das voltas locais dos ciclistas
+    int menorVolta = 0; // Menor volta local do coordenador
+    int maiorVolta = 0; // Maior volta local do coordenador
+    bool terminouVolta = false;
 
     while (true) {
+        for (ciclista * p = c->prox; p != cab; p = p->prox) {
+            while (p->arrive == 0) usleep(1);
+            p->arrive = 0;
+        }
 
-      for (ciclista * p = c->prox; p != cab; p = p->prox) {
-          while (!p->arrive && !p->eliminado) usleep(1); //!p->eliminado evita a possibilidade de uma thread zumbi travar tudo.
-          if (p->voltas > voltas) {
-              voltas = p->voltas;
-              if (voltas%2 == 0 && voltas > 1) atento = 1; //caso mult2, juiz atento
-          }
-          p->arrive = 0;
-      }
+        if (true) { // if temporário (código da thread coordenadora)
+            minVolta = maxVolta;
+            for (ciclista * p = c->prox; p != cab; p = p->prox) {
+                if (maxVolta < p->voltas) maxVolta = p->voltas;
+                if (minVolta > p->voltas) minVolta = p->voltas;
+            }
+            terminouVolta = false;
+            if (maiorVolta != maxVolta) {
+                maiorVolta = maxVolta;
+            }
+            if (menorVolta != minVolta) {
+                menorVolta = minVolta;
+                terminouVolta = true;
+            }
+            usleep(100000);
+            if (terminouVolta) visualizador();
+            // visualizador();
+            visualizadorStderr();
+            if (DEBUG) {
+                printf("Juiz: maxVolta: %d, minVolta: %d, terminouVolta: %d\n\n", maxVolta, minVolta, terminouVolta);
+                if (DEBUG) fprintf(stderr, "Juiz: maxVolta: %d, minVolta: %d\n\n", maxVolta, minVolta);
+            }
+            if (terminouVolta) {
+                printf("imprimeRank (volta %d)\n", menorVolta - 1);
+                imprimeRank(L, menorVolta - 1);
+                if (menorVolta%2 == 0) {
+                    int ultimo = ultimoColocado(L, menorVolta - 1);
+                    printf("Ultimo colocado: %d\n", ultimo);
 
-      /*Caso atento, alguem sera eliminado*/
-      if (atento) {
-          cont = 0;
-          menorVolta = voltas;
-          /*verifica se alguem ficou em ultimo*/
-          for (ciclista * p = c->prox; p != cab; p = p->prox) {
-              if (p->voltas < menorVolta) {
-                  menorVolta = p->voltas;
-                  eliminado = p;
-                  cont = 1; // Caso existir um unico valor menor esse cont permanecera = 1
-              } else if (p->voltas == menorVolta) {
-                  cont = 0; // Caso houver dois ou mais valores menores nao ha ultimo
-              }
-          }
-          if (cont == 1) {
-            eliminado->ultimo = 1; //Levanta a flag de ultimo, a thread fara o resto.
-            atento = 0;
-          }
-      }
-
-      usleep(100000);
-      visualizador();
-      if (DEBUG) {
-          printf("Juiz: ...volta: %d\n\n",voltas);
-          fprintf(stderr, "Juiz: ...volta: %d\n",voltas);
-      }
-      for (ciclista * p = cab->prox; p != cab; p = p->prox) {
-          p->Continue = 1;
-      }
-
+                    ciclista *q, *anterior;
+                    anterior = c;
+                    for (q = c->prox; q != cab; q = q->prox) { // encontra a thread do ultimo colocado
+                        if (q->num == ultimo) break;
+                        anterior = q;
+                    }
+                    pista[q->py][q->px] = NULL;
+                    InsereCiclistaRank(rankFinal, q->num, tempo);
+                    pthread_cancel(q->id);
+                    // Remover da lista de threads
+                    anterior->prox = q->prox;
+                    free(q);
+                    printf("imprimeRank final (volta %d)\n", menorVolta - 1);
+                    imprimeRankFinal(rankFinal);
+                    // Remover as voltas anteriores da ED
+                        // Alternativa é eliminar as voltas ímpares assim que imprimir o rank
+                        // Descobrir na ED os últimos colocados OK
+                            // Se houver mais de um, sortear algum OK
+                    // Eliminar o último colocado
+                        // Eliminação: remover sua posição da pista, parar a thread, destrui-la, remover da lista de threads
+                    // Eliminar da ED a volta mais antiga
+                }
+            }
+            tempo++;
+        }
+        for (ciclista * p = cab->prox; p != cab; p = p->prox) {
+            p->Continue = 1;
+        }
+        if (DEBUG) fprintf(stderr, "Juiz loop fim\n\n");
     }
 }
 
@@ -167,7 +269,15 @@ void visualizador()
   printf("\n");
   for (int i = 0; i < 10; i++) {
       for (int j = 0; j < d; j++) {
-          if (pista[i][j] != NULL) printf("%02d|",pista[i][j]->num);
+          if (pista[i][j] != NULL) {
+              printf("%02d",pista[i][j]->num);
+              if (pista[i][j]->velocidade == 1)
+                printf("|");
+              else if (pista[i][j]->velocidade == 2)
+                printf(")");
+              else
+                printf(">");
+          }
           else printf("  |");
       }
       printf("\n");
@@ -178,19 +288,42 @@ void visualizador()
   }
   printf("\n\n");
 }
-
+void visualizadorStderr()
+{
+  for (int j = 0; j < d; j++) {
+    fprintf(stderr, "---");
+  }
+  fprintf(stderr, "\n");
+  for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < d; j++) {
+          if (pista[i][j] != NULL) {
+              fprintf(stderr, "%02d",pista[i][j]->num);
+              if (pista[i][j]->velocidade == 1)
+                fprintf(stderr, "|");
+              else if (pista[i][j]->velocidade == 2)
+                fprintf(stderr, ")");
+              else
+                fprintf(stderr, ">");
+          }
+          else fprintf(stderr, "  |");
+      }
+      fprintf(stderr, "\n");
+      for (int j = 0; j < d; j++) {
+        fprintf(stderr, "---");
+      }
+      fprintf(stderr, "\n");
+  }
+  fprintf(stderr, "\n\n");
+}
 
 /* Calcula probabilidade e muda velocidade */
 void velocidade(ciclista *p)
 {
-    int prob;
-    srand(time(NULL));
-    prob  = rand()%10;
-    // prob = randReal(0, 1);
-
-    if (p->velocidade == 0) {
-        if (prob >= 2) p->velocidade = 1;
-    } else if (p->velocidade == 1) {
-        if (prob < 4) p->velocidade = 0;
-    }
+    double prob = randReal(0, 1);
+    if (DEBUG) fprintf(stderr, "Função velocidade (prob: %lf)\n", prob);
+    if (p->voltas <= 1) p->velocidade = 1; // velocidade na primeira volta é 30km/h
+    else if (p->velocidade == 1 && prob < 0.8)
+        p->velocidade = 2;
+    else if (p->velocidade == 2 && prob < 0.4)
+        p->velocidade = 1;
 }
