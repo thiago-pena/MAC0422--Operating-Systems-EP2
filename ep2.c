@@ -13,11 +13,10 @@
 
 
 #define TRUE 1
-#define DEBUG 1
 
 
 /* Variáveis globais */
-ciclista ***pista;
+metroPista **pista;
 ciclista *cab;
 int d, n;
 pthread_mutex_t mutex;
@@ -38,15 +37,16 @@ int main(int argc, char const *argv[]) {
     rankFinal = CriaRank(0, n);
 
     /*Cria pista como uma matriz de ponteiros*/
-    pista = malloc(10 * sizeof(ciclista**));
+    pista = malloc(10 * sizeof(metroPista*));
     for (int i = 0; i < 10; i++) {
-        pista[i] = malloc(d * sizeof(ciclista*));
+        pista[i] = malloc(d * sizeof(metroPista));
     }
 
     /*Declara posições da pista vazias como NULLs*/
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < d; j++) {
-            pista[i][j] = NULL;
+            pista[i][j].ciclista = NULL;
+            pista[i][j].ocupada = false;
         }
     }
 
@@ -61,7 +61,8 @@ int main(int argc, char const *argv[]) {
         for(int i = 0; i < 5; i++) {
             ciclista *novoCiclista;
             novoCiclista = malloc(sizeof(ciclista));
-            pista[i][(d -1) -j] = novoCiclista;
+            pista[i][(d -1) -j].ciclista = novoCiclista;
+            pista[i][(d -1) -j].ocupada = true;
             novoCiclista->num = numComp++;
             novoCiclista->arrive = 0;
             novoCiclista->Continue = 0;
@@ -79,7 +80,8 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < r; i++) {
         ciclista *novoCiclista;
         novoCiclista = malloc(sizeof(ciclista));
-        pista[i][d -q -1] = novoCiclista;
+        pista[i][d -q -1].ciclista = novoCiclista;
+        pista[i][d -q -1].ocupada = true;
         novoCiclista->num = numComp++;
         novoCiclista->arrive = 0;
         novoCiclista->Continue = 0;

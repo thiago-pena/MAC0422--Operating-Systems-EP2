@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define DEBUG 1
+
 typedef struct celrank {
     int volta;      // Número da volta
     int n;          // Número de ciclistas ativos nessa volta

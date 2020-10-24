@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include "tools.h"
 
+
 /*Estrutura correspondente a um ciclista*/
 typedef struct Ciclista ciclista;
 struct Ciclista {
@@ -23,6 +24,13 @@ struct Ciclista {
     pthread_t id;
     ciclista *prox;
     bool roundFeito; // cada ciclista indica se seu round já está completo
+};
+
+typedef struct MetroPista metroPista;
+struct MetroPista {
+    int ocupada;
+    pthread_mutex_t mutex;
+    ciclista *ciclista;
 };
 
 
