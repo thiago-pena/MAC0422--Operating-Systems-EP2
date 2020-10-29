@@ -1,0 +1,47 @@
+- inseri DEBUG2 para limpar a saída do STDERR que estava muito suja
+- inclusão de uma variável global atômica para contar o número de ciclistas ativos
+    _Atomic int nCiclistasAtivos;
+    - é inicializada com n
+    - é decrementada sempre que um ciclista for eliminado (ou se houver quebra).
+    - objetivo é identificar quando sobrarem 2 ciclistas apenas (velocidade 90km/h)
+      e também para não haver possibilidade de quebra com nCiclistasAtivos <= 5. <<<<<<<<<<<<<<<<<<<<<
+    - quem elimina é a thread coordenadora ---> se a quebra tb for assim, não vai <<<<<<<<<<<<<<<<<<<<<
+      precisar ser atomic
+
+- inclusão de uma variável global "ultimasVoltas" para indicar que estamos
+  nas 2 últimas voltas
+- inclusão de uma variável global "tem90" pra dizer se haverá um ciclista com
+  velocidade de 90km/h
+- inclusão de uma variável global "nCiclista90" que informa o número do ciclista
+  que terá 90km/h
+
+------------------------------------------------------------------------------------------------
+Implementar
+- 2 últimas voltas
+    - probabilidade OK
+    - velocidades
+    - dt
+    [E] Considere ainda que nas 2 ́ultimas voltas há a chance de 10% de 1
+        ciclista aleatório qualquer e respeitando as regras de ultrapassagem,
+        fazer essas 2 ́ultimas voltas a 90Km/h (1m a cada 40ms).
+    [E] A partir das duas ́ultimas voltas, caso algum ciclista tenha sido sorteado
+        para pedalar a 90Km/h, a simulação deve passar a simular a corrida em
+        intervalos de 20ms.
+- quebra
+    - probabilidades, destruir thread
+    [E] Considere que a cada vez que um ciclista completa múltiplos de 6 voltas,
+        ele tem a chance de 5% de quebrar.
+    [E] Caso algum ciclista quebre, essa informação deve ser exibida na tela no
+        momento exato em que ele quebrou. A volta em que ele estava e o identificador
+        dele devem ser informados. Entretanto, se houverem apenas 5 ciclistas na
+        prova, a probabilidade de quebra para todos deixa de existir.
+
+- mutex no InsereCiclista
+- acabar a corrida quando sobrar apenas 1 ciclista
+- limpar saída do stderr!!!
+
+- limpar rank de voltas que terminaram
+- tratar seções críticas
+- monitoramento
+    - tempo
+    - memória

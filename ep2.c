@@ -20,6 +20,11 @@
 ciclista ***pista;
 ciclista *cab;
 int d, n;
+_Atomic int nCiclistasAtivos;
+bool ultimasVoltas = false;
+bool tem90 = false;
+int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
+int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 pthread_mutex_t mutex;
 int maiorVolta, menorVolta;
 long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
@@ -30,6 +35,8 @@ int main(int argc, char const *argv[]) {
 
     d = atoi(argv[1]);
     n = atoi(argv[2]);
+    nCiclistasAtivos = n;
+    if (n <= 2) ultimasVoltas = true;
     pthread_mutex_init(&mutex, NULL);
 
     // Cria lista de Ranks por volta
