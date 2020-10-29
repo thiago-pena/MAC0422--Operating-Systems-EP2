@@ -19,8 +19,8 @@
 Implementar
 - 2 últimas voltas
     - probabilidade OK
-    - velocidades
-    - dt
+    - velocidades OK
+    - dt OK
     [E] Considere ainda que nas 2 ́ultimas voltas há a chance de 10% de 1
         ciclista aleatório qualquer e respeitando as regras de ultrapassagem,
         fazer essas 2 ́ultimas voltas a 90Km/h (1m a cada 40ms).
@@ -28,7 +28,7 @@ Implementar
         para pedalar a 90Km/h, a simulação deve passar a simular a corrida em
         intervalos de 20ms.
 - quebra
-    - probabilidades, destruir thread
+    - probabilidades, destruir thread, nCiclistasAtivos
     [E] Considere que a cada vez que um ciclista completa múltiplos de 6 voltas,
         ele tem a chance de 5% de quebrar.
     [E] Caso algum ciclista quebre, essa informação deve ser exibida na tela no
@@ -36,12 +36,12 @@ Implementar
         dele devem ser informados. Entretanto, se houverem apenas 5 ciclistas na
         prova, a probabilidade de quebra para todos deixa de existir.
 
-- mutex no InsereCiclista
 - acabar a corrida quando sobrar apenas 1 ciclista
-- limpar saída do stderr!!!
-
+- limpar saídas
 - limpar rank de voltas que terminaram
 - tratar seções críticas
+    - mutex no InsereCiclista
+    - pista
 - monitoramento
     - tempo
     - memória
