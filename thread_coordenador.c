@@ -102,6 +102,15 @@ void * juiz(void * arg)
                 fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
                 visualizador();
                 visualizadorStderr();
+                fprintf(stderr, "Teste RemoveRanksVolta ini\n");
+                if (ultimaVoltaDeEliminacao > 0) {
+                    fprintf(stderr, "volta ini: %d\n", L->rank->volta);
+                    L = RemoveRanksVolta(L, ultimaVoltaDeEliminacao);
+                    fprintf(stderr, "thread volta\n");
+                    fprintf(stderr, "volta fim a: %d\n", L->rank == NULL);
+                    fprintf(stderr, "volta fim: %d\n", L->rank->volta);
+                }
+                fprintf(stderr, "Teste RemoveRanksVolta fim\n");
             }
 
         for (ciclista * p = cab->prox; p != cab; p = p->prox) {

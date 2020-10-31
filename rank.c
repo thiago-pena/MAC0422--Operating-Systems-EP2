@@ -68,10 +68,22 @@ void DestroiRank(Rank R) {
 }
 
 // Recebe uma ListaRank L e remove o rank do início da lista
-void RemoveRank(ListaRank L) {
-    Rank R = L->rank;
-    L = L->prox;
-    DestroiRank(R);
+ListaRank RemoveRank(ListaRank lista) {
+    Rank rank = lista->rank;
+    ListaRank l = lista;
+    lista = lista->prox;
+    DestroiRank(rank);
+    free(l);
+    return lista;
+}
+
+// Recebe uma ListaRank L e remove os rank menores que volta
+ListaRank RemoveRanksVolta(ListaRank L, int volta) {
+    if (L == NULL) return NULL;
+    if (L != NULL && L->rank != NULL && L->prox != NULL && L->rank->volta < volta) {
+        L = RemoveRank(L);
+    }
+    return L;
 }
 
 // Destrói uma lista de ranks

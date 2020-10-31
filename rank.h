@@ -42,7 +42,10 @@ ListaRank CriaListaRank();
 void DestroiRank(Rank R);
 
 // Recebe uma ListaRank L e remove o rank do início da lista
-void RemoveRank(ListaRank L);
+ListaRank RemoveRank(ListaRank L);
+
+// Recebe uma ListaRank L e remove os rank menores que volta
+ListaRank RemoveRanksVolta(ListaRank L, int volta);
 
 // Destrói uma lista de ranks
 void DestroiListaRank(ListaRank L);
