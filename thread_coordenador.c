@@ -3,9 +3,7 @@
 
 #define DEBUG 1
 #define DEBUG2 1
-#define NSLEEP 100000000 // 0.1s = 1E-1
 #define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
-#define PROB_QUEBRA 0.001 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
 
 
 // Variáveis globais
@@ -46,28 +44,24 @@ void * juiz(void * arg)
             if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste quebra)\n");
             if (ciclistaQuebrou) // elimina todos os ciclistas que quebraram (se quebrou, está na linha de chegada)
                 eliminaQuebra(c);
-
             eliminaCiclistaMarcado(c); // verifica se tem algum ciclista marcado para eliminação na linha de chegada
 
-            if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @1\n");
             minVolta = maxVolta;
             for (ciclista * p = c->prox; p != cab; p = p->prox) {
                 if (maxVolta < p->voltas) maxVolta = p->voltas;
                 if (minVolta > p->voltas) minVolta = p->voltas;
             }
             if (maiorVolta != maxVolta) maiorVolta = maxVolta;
-            fprintf(stderr, "\t\t\t(Coordenador teste)  Teste volta -> ultimaVoltaDeEliminacao: %d, minVolta: %d\n", ultimaVoltaDeEliminacao, minVolta);
+            if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Voltas dos ciclistas ativos\n");
+            imprimeVoltasCiclistas(c);
+            if (maiorVolta > 0) imprimeVoltasListaRank(L);
             while (minVolta > 0 && ultimaVoltaDeEliminacao < minVolta) {
-                ultimaVoltaDeEliminacao++; // terminou uma volta
-                if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) loop volta de eliminacao <<<<<<<<<<<<<<\n");
-                // Eliminação com um while, incrementando volta (para tratar de eliminações em espera)
                 imprimeRank(L, ultimaVoltaDeEliminacao);
+                imprimeStderrRank(L, ultimaVoltaDeEliminacao);
+                ultimaVoltaDeEliminacao++; // terminou uma volta
                 if (ultimaVoltaDeEliminacao%2 == 0) { // Eliminação
-                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Volta de eliminacao\n");
-                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Voltas dos ciclistas ativos\n");
-                    imprimeVoltasCiclistas(c);
-                    imprimeRank(L, ultimaVoltaDeEliminacao);
-                    int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao); printf(">>>> Ultimo colocado (Eliminado): %d\n", ultimo);
+                    int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao);
+                    printf(">>>> Ultimo colocado (Eliminado): %d\n", ultimo);
                     eliminaCiclista(c, ultimo);
                     nCiclistasAtivos--;
                     fprintf(stderr, "imprimeRank final (volta %d) / total de ciclistas ativos: %d\n", ultimaVoltaDeEliminacao, nCiclistasAtivos);
@@ -81,7 +75,6 @@ void * juiz(void * arg)
                         return NULL;
                     }
                     else if (nCiclistasAtivos == 2) { // sorteio 90km/h
-                        if (DEBUG) fprintf(stderr, ">>>>> 2 últimas voltas\n");
                         ultimasVoltas = true;
                         if (randReal(0, 1) < PROB_90) {
                             tem90 = true;
@@ -90,9 +83,7 @@ void * juiz(void * arg)
                                 nCiclista90 = c->prox->num;
                             else
                                 nCiclista90 = c->prox->prox->num; // será o 2º
-                            if (DEBUG) fprintf(stderr, "\tO ciclista sorteado p/ ter 90km/h foi: %d\n", nCiclista90);
                         }
-
                     }
                     // Remover as voltas anteriores da ED
                         // Alternativa é eliminar as voltas ímpares assim que imprimir o rank
@@ -248,8 +239,8 @@ void eliminaQuebra(ciclista *c) {
 
 // para Debug apenas (remover)
 void imprimeVoltasCiclistas(ciclista *c) {
+    fprintf(stderr, "[DEBUG] voltas de cada ciclista\n");
     for (ciclista * p = c->prox; p != cab; p = p->prox) {
-        fprintf(stderr, "[DEBUG] voltas de cada ciclista em volta de eliminacao\n");
         if (DEBUG2) {
             fprintf(stderr, "\tciclista %d, volta: %d\n", p->num, p->voltas);
         }

@@ -71,4 +71,7 @@ int ultimoColocado(ListaRank L, int volta);
 // A função remove o ciclista do rank dessa volta e retorna um novo último colocado
 int novoUltimoColocado(ListaRank L, int volta, int numCiclista);
 
+// Para debug
+void imprimeVoltasListaRank(ListaRank L);
+
 #endif

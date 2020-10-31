@@ -29,10 +29,13 @@ struct Ciclista {
 };
 
 
-int mod(int a, int b);
 void * competidor(void * arg);
 void velocidade(ciclista *p);
 void moveFrente(ciclista *p);
 void moveTemp(ciclista *p);
+void tratalinhaDechegada(ciclista *p);
+void movePistaInterna(ciclista *p);
+void movePistaInterna2(ciclista *p);
+int mod(int a, int b);
 
 #endif

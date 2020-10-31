@@ -89,7 +89,7 @@ void imprimeRank(ListaRank L, int volta) {
             break;
         }
     if (R == NULL) {
-        printf("ERRO! Volta não encontrada na lista de ranks.\n");
+        printf("ERRO! Volta não encontrada na lista de ranks. (volta %d)\n", volta);
         return;
     }
     printf("Ciclic\tPos\tTempo\n");
@@ -100,7 +100,7 @@ void imprimeRank(ListaRank L, int volta) {
 }
 
 // Imprime na saíade de erro a lista de rank de uma volta específica
-void imprimeRankStderr(ListaRank L, int volta) {
+void imprimeStderrRank(ListaRank L, int volta) {
     Rank R = NULL;
     for (ListaRank L1 = L; L1 != NULL; L1 = L1->prox)
     if (L1->rank->volta == volta) {
@@ -108,7 +108,7 @@ void imprimeRankStderr(ListaRank L, int volta) {
         break;
     }
     if (R == NULL) {
-        fprintf(stderr, "ERRO! Volta não encontrada na lista de ranks.\n");
+        fprintf(stderr, "ERRO! Volta não encontrada na lista de ranks. (volta %d)\n", volta);
         return;
     }
     fprintf(stderr, "Ciclic\tPos\tTempo\n");
@@ -159,7 +159,7 @@ int ultimoColocado(ListaRank L, int volta) {
     int a, b;
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
-        printf("ERRO! Volta não encontrada na função ultimoColocado.\n");
+        printf("ERRO! Volta não encontrada na função ultimoColocado. (volta %d)\n", volta);
         exit(1);
     }
     a = b = R->n - 1; // último índice
@@ -176,14 +176,14 @@ int ultimoColocado(ListaRank L, int volta) {
 int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
-        printf("ERRO! Volta não encontrada na função novoUltimoColocado.\n");
+        printf("ERRO! Volta não encontrada na função novoUltimoColocado. (volta %d)\n", volta);
         exit(1);
     }
     int i;
     while (i < R->n && R->nCiclista[i] != numCiclista)
         i++;
     if (i >= R->n) {
-        printf("ERRO! numCiclista na encontrado na função novoUltimoColocado.\n");
+        printf("ERRO! numCiclista na encontrado na função novoUltimoColocado. (volta %d)\n", volta);
         exit(1);
     }
     for ( ; i + 1 < R->n; i++) {
@@ -192,4 +192,13 @@ int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
     }
     (R->n)--;
     return ultimoColocado(L, volta);
+}
+
+// Para debug
+void imprimeVoltasListaRank(ListaRank L) {
+    fprintf(stderr, "Voltas em listaRank: ");
+    for (ListaRank L1 = L; L1 != NULL; L1 = L1->prox) {
+        fprintf(stderr, "%d ", L1->rank->volta);
+    }
+    fprintf(stderr, "\n");
 }
