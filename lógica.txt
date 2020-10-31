@@ -1,0 +1,101 @@
+- eliminações devem ocorrer na linha de chegada
+    -> eliminação OK
+    -> quebra?
+
+[F] As voltas de referência para eliminação sempre são de duas em duas. Isso não
+muda. Você precisa ter um controle de como foi a classificação dos ciclistas
+volta a volta não importa o momento em que isso aconteça. Se alguém está muito
+lento, ainda assim em algum momento ele vai ter que terminar a volta (contanto
+que ele não quebre). Nesse caso, quando vc tiver a classificação final daquela
+volta, ao chegar na volta par, vc vê quem foi o último e elimina ele na hora em
+que ele passar pela linha de chegada. Se ele era muito lento, ele acabou
+"represando" as eliminações das voltas seguintes mas quando ele for eliminado vc
+confirmará as classificações das outras voltas pares e vai eliminando aqueles
+outros ciclistas quando eles passarem nas linhas de chegada.
+================================================================================
+- fazer supondo que a quebra nunca é o último (depois tratar como exceção)
+- coordenador: se tiver quebra, percorre as threads buscando as quebras
+    - tira o ciclista da estrutura
+    - pára/destroi a thread
+    - se terminouVolta (ele pode ser o último)
+        - verifica se ele é o último
+            - se for, recalcula menorVolta???
+    - cc, pode seguir com o código padrão
+- mover a busca do último
+
+-> rank de quebra
+================================================================================
+Voltas
+- largada na volta -1
+- primeira volta é a volta 0
+- um ciclista, ao terminar a volta, incrementa p->voltas, depois registra na rank
+    *volta 1 -> posição x
+- as voltas de eliminação olham a volta completada
+- as voltas de eliminação são pares (voltas completadas 2, 4, 6, ...)
+================================================================================
+
+Inserção no rank de voltas
+    - quando um ciclista completa uma volta:
+        - só é inserido se não quebrar
+
+Quebra
+- se o ciclista quebrou:
+    - ele é eliminado antes de completar essa volta
+    - ele é eliminado antes da determinamos quem era o último da volta
+
+Determinação do último colocado (quando menorVolta muda)
+(Caso 1) Eliminação pontual: menorVolta muda quando um último colocado completa uma volta
+    OBS: Neste caso não há ciclista quebrado candidato à eliminação, pois ele não completa a volta
+
+    (Caso 1.1) Um único ciclista é o último colocado
+        - Eliminação padrão
+    (Caso 1.2) Há mais de um ciclista na última posição
+        - É sorteado um ciclista entre os últimos colocados e é feita a eliminação padrão
+(Caso 2)
+
+- eliminação pontual (justa)
+- eliminação tardia (acumulada)
+
+- menorVolta pode aumentar:
+    (1) pelo avanço natural de voltas dos últimos
+        - neste caso, teremos
+    (2) um ciclista muito lento é eliminado
+        - incrementamos menorVolta (enquanto menorVolta <= minVolta)
+            (2.1) menorVolta não é volta de eliminação -> não faz nada
+            (2.2) menorVolta é volta de eliminação (havia eliminações acumuladas)
+                - determina último dessa volta
+                - levanta flag de eliminação
+                    - se ele estiver na linha de chegada -> elimina (loop recalcula minVolta)
+                    - senão estiver na linha de chegada -> segue o jogo
+    (3) um ciclista muito lento quebra
+    -> minVolta, menorVolta, ultimaVoltaDeEliminação
+    - menorVolta é incrementada até encontrar uma volta de eliminação pendente
+        -> mudar de nome: voltaDeEliminacao
+        -> ao encontrar uma volta de eliminação, dou break no incremento
+
+
+
+Eliminação
+- pode ocorrer de ter uma eliminação tardia, por exemplo:
+    - o ciclista 1 é muito lento e termina a volta 2 (deve ser eliminado), todos os
+      demais já terminaram a volta 4 (o último na volta 4 foi o ciclista 2)
+    - eliminamos o ciclista 1 (terminou a volta 2)
+    - guardamos menorVolta original em uma variável auxiliar
+    - recalculamos a menorVolta (pegando a menor volta de todos os ciclistas)
+        - faço um loop incrementando de 2 em 2 até chegar na nova menorVolta
+            - marco o último dessas voltas com a flag eliminado
+                - eles serão eliminados assim que cruzarem a linha de chegada
+
+
+
+
+
+
+
+
+
+
+
+
+
+//

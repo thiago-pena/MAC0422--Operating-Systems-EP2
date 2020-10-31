@@ -14,6 +14,7 @@
 
 #define TRUE 1
 #define DEBUG 1
+#define SEED 2
 
 
 /* Variáveis globais */
@@ -25,6 +26,7 @@ bool ultimasVoltas = false;
 bool tem90 = false;
 int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
+bool ciclistaQuebrou;
 pthread_mutex_t mutex;
 int maiorVolta, menorVolta;
 long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
@@ -32,6 +34,7 @@ ListaRank L;
 Rank rankFinal;
 
 int main(int argc, char const *argv[]) {
+    srand(SEED); // seed da bib rand
 
     d = atoi(argv[1]);
     n = atoi(argv[2]);
@@ -74,11 +77,14 @@ int main(int argc, char const *argv[]) {
             novoCiclista->Continue = 0;
             novoCiclista->px = d -1 -j;
             novoCiclista->py = i;
-            novoCiclista->voltas = 0;
+            novoCiclista->voltas = -1;
             novoCiclista->ultimo = 0;
             novoCiclista->eliminado = 0;
             novoCiclista->roundFeito = false;
             novoCiclista->velocidade = 1;
+            novoCiclista->quebrou = false;
+            novoCiclista->linhaDeChegada = false;
+            novoCiclista->eliminar = false;
             novoCiclista->prox = cab->prox;
             cab->prox = novoCiclista;
         }
@@ -92,11 +98,14 @@ int main(int argc, char const *argv[]) {
         novoCiclista->Continue = 0;
         novoCiclista->px = d -1 -q;
         novoCiclista->py = i;
-        novoCiclista->voltas = 0;
+        novoCiclista->voltas = -1;
         novoCiclista->ultimo = 0;
         novoCiclista->eliminado = 0;
         novoCiclista->roundFeito = false;
         novoCiclista->velocidade = 1;
+        novoCiclista->quebrou = false;
+        novoCiclista->linhaDeChegada = false;
+        novoCiclista->eliminar = false;
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }
@@ -126,6 +135,11 @@ int main(int argc, char const *argv[]) {
           printf("\n ERROR joining thread %ld\n",p->id);
           exit(1);
       }
+    }
+
+    if (pthread_join(coord, NULL)) {
+        printf("\n ERROR joining thread juiz\n");
+        exit(1);
     }
 
     printf("Rank final\n");

@@ -61,4 +61,8 @@ Rank BuscaRank(ListaRank L, int volta);
 // dessa volta. Se houver mais de um último colocado, sorteia um deles
 int ultimoColocado(ListaRank L, int volta);
 
+// Recebe uma lista de ranks por volta, uma volta e um número de ciclista.
+// A função remove o ciclista do rank dessa volta e retorna um novo último colocado
+int novoUltimoColocado(ListaRank L, int volta, int numCiclista);
+
 #endif

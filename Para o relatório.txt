@@ -1,0 +1,25 @@
+Ciclic	Pos	Tempo
+1   	1	50
+2	    2	60
+3       3   70
+4       4   80
+5       5   80
+6       6   80 << último por sorteio
+7       7   80
+
+Houve uma eliminação de um ciclista muito lento e temos uma eliminação em espera.
+No rank dessa volta, 5, 6 e 7 estão empatados em último.
+Por sorteio, 6 foi declarado o último. Mas ele não está na linha de chegada.
+Então foi marcado para ser eliminado, mas ele quebra antes de chegar.
+A função BLA elimina o ciclista 6 da estrutura de dados.
+
+Ciclic	Pos	Tempo
+1   	1	50
+2	    2	60
+3       3   70
+4       4   80
+5       5   80
+7       7   80
+
+Agora podemos recalcular o último colocado para marcá-lo para ser eliminado
+quando estiver na linha de chegada.

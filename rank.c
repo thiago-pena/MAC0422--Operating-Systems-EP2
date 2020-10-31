@@ -132,7 +132,7 @@ int ultimoColocado(ListaRank L, int volta) {
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
         printf("ERRO! Volta não encontrada na função ultimoColocado.\n");
-        return -1;
+        exit(1);
     }
     a = b = R->n - 1; // último índice
     while (R->t[a] == R->t[b])
@@ -141,4 +141,27 @@ int ultimoColocado(ListaRank L, int volta) {
     if (a == b) // só há um último colocado
         return R->nCiclista[a];
     return R->nCiclista[randInteger(a, b)];
+}
+
+// Recebe uma lista de ranks por volta, uma volta e um número de ciclista.
+// A função remove o ciclista do rank dessa volta e retorna um novo último colocado
+int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
+    Rank R = BuscaRank(L, volta);
+    if (R == NULL) {
+        printf("ERRO! Volta não encontrada na função novoUltimoColocado.\n");
+        exit(1);
+    }
+    int i;
+    while (i < R->n && R->nCiclista[i] != numCiclista)
+        i++;
+    if (i >= R->n) {
+        printf("ERRO! numCiclista na encontrado na função novoUltimoColocado.\n");
+        exit(1);
+    }
+    for ( ; i + 1 < R->n; i++) {
+        R->nCiclista[i] = R->nCiclista[i + 1];
+        R->t[i] = R->t[i + 1];
+    }
+    (R->n)--;
+    return ultimoColocado(L, volta);
 }

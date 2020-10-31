@@ -23,6 +23,9 @@ struct Ciclista {
     pthread_t id;
     ciclista *prox;
     bool roundFeito; // cada ciclista indica se seu round já está completo
+    bool quebrou;
+    bool linhaDeChegada;
+    bool eliminar; // o ciclista deve ser eliminado assim que passar pela linha de chegada
 };
 
 
