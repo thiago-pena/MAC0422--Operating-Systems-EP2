@@ -159,7 +159,7 @@ void tratalinhaDechegada(ciclista *p) {
         }
     }
     if (!quebrou) { // não quebrou
-        if (DEBUG) fprintf(stderr, "Ciclista: %d (x == 0), volta: %d\n", p->num, p->voltas);
+        if (DEBUG) fprintf(stderr, "Ciclista: %d (x = 0), volta: %d\n", p->num, p->voltas);
         printf(">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
         fprintf(stderr, ">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
         InsereCiclista(L, n, p->voltas, p->num, tempo);

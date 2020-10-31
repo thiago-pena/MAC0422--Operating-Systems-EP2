@@ -54,7 +54,7 @@ void InsereCiclista(ListaRank L, int size, int volta, int ciclista, int t) {
 // Cria uma lista ligada de Ranks, com primeiro rank de tamanho size
 // e retorna um ponteiro para a lista criada
 ListaRank CriaListaRank() {
-    ListaRank L = malloc(sizeof(ListaRank));
+    ListaRank L = malloc(sizeof(eloRank));
     L->rank = NULL;
     L->prox = NULL;
     return L;
@@ -175,7 +175,7 @@ int ultimoColocado(ListaRank L, int volta) {
         exit(1);
     }
     a = b = R->n - 1; // último índice
-    while (R->t[a] == R->t[b])
+    while (a >= 0 && R->t[a] == R->t[b])
         a--;
     a++;
     if (a == b) // só há um último colocado
@@ -191,11 +191,11 @@ int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
         printf("ERRO! Volta não encontrada na função novoUltimoColocado. (volta %d)\n", volta);
         exit(1);
     }
-    int i;
+    int i = 0;
     while (i < R->n && R->nCiclista[i] != numCiclista)
         i++;
     if (i >= R->n) {
-        printf("ERRO! numCiclista na encontrado na função novoUltimoColocado. (volta %d)\n", volta);
+        printf("ERRO! numCiclista nao encontrado na função novoUltimoColocado. (volta %d)\n", volta);
         exit(1);
     }
     for ( ; i + 1 < R->n; i++) {

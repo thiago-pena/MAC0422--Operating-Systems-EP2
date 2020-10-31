@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct celrank {
+typedef struct celRank {
     int volta;      // Número da volta
     int n;          // Número de ciclistas ativos nessa volta
     int *nCiclista; // Vetor de números dos ciclistas ordenados por posição naquela volta
@@ -21,8 +21,8 @@ typedef celRank *Rank;
 typedef struct eloRank {
     Rank rank;
     struct eloRank *prox;
-} EloRank;
-typedef EloRank *ListaRank;
+} eloRank;
+typedef eloRank *ListaRank;
 
 // Cria um Rank vazio e retorna um ponteiro para ele
 Rank CriaRank(int volta, int size);

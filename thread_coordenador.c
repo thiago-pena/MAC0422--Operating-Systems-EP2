@@ -4,7 +4,7 @@
 #define DEBUG 1
 #define DEBUG2 1
 #define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
-
+#define NSLEEP 10000 // 0.01s = 1E-2 = 10ms
 
 // Variáveis globais
 extern ciclista ***pista;
@@ -181,6 +181,9 @@ void visualizadorStderr()
 // estrutura de dados, insere-o no rank final, interrompe sua thread e
 // libera a memória alocada por ele
 void eliminaCiclista(ciclista *c, int nCiclista) {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
     fprintf(stderr, "\t\t\t\t(coordenador) inicio função eliminaCiclista\n");
     ciclista *q, *anterior;
     anterior = c;
@@ -194,6 +197,7 @@ void eliminaCiclista(ciclista *c, int nCiclista) {
     // Remover da lista de threads
     anterior->prox = q->prox;
     fprintf(stderr, "\t\t\t\t\t(coordenador) o ciclista %d foi eliminado <<<<<<<<<<\n", q->num);
+    nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
     free(q);
     fprintf(stderr, "\t\t\t\t\t(coordenador) fim função eliminaCiclista\n");
 }
@@ -201,6 +205,10 @@ void eliminaCiclista(ciclista *c, int nCiclista) {
 // Recebe um inteiro nCiclista, remove da estrutura c um ciclista marcado para
 // ser eliminado interrompe sua thread e libera a memória alocada por ele
 void eliminaCiclistaMarcado(ciclista *c) {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
+
     fprintf(stderr, "\t\t\t\t(coordenador) inicio função eliminaCiclistaMarcado\n");
     ciclista *q, *anterior;
     anterior = c;
@@ -211,6 +219,7 @@ void eliminaCiclistaMarcado(ciclista *c) {
             pthread_cancel(q->id);
             // Remover da lista de threads
             anterior->prox = q->prox;
+            nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
             free(q);
             break;
         }
@@ -220,6 +229,9 @@ void eliminaCiclistaMarcado(ciclista *c) {
 }
 
 void eliminaQuebra(ciclista *c) {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
     fprintf(stderr, "\t\t\t\t(coordenador) inicio função eliminaQuebra\n");
     ciclista *anterior = c;
     for (ciclista * p = c->prox; p != cab; p = p->prox) {
@@ -238,6 +250,7 @@ void eliminaQuebra(ciclista *c) {
             p = anterior;
             pista[q->py][q->px] = NULL; // limpa pista
             pthread_cancel(q->id); // interrompe a thread
+            nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
             free(q);
             nCiclistasAtivos--;
         }
