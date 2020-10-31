@@ -1,5 +1,5 @@
-#ifndef THREADS_H
-#define THREADS_H
+#ifndef THREAD_CICLISTA_H
+#define THREAD_CICLISTA_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,10 +29,10 @@ struct Ciclista {
 };
 
 
+int mod(int a, int b);
 void * competidor(void * arg);
-void * juiz(void * arg);
-void visualizador();
-void visualizadorStderr();
 void velocidade(ciclista *p);
+void moveFrente(ciclista *p);
+void moveTemp(ciclista *p);
 
 #endif

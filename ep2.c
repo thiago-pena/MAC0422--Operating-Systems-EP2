@@ -8,7 +8,8 @@
 #include <unistd.h>
     // sleep
 #include <stdbool.h>
-#include "threads.h"
+#include "thread_ciclista.h"
+#include "thread_coordenador.h"
 #include "rank.h"
 
 
