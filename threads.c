@@ -4,8 +4,8 @@
 #define DEBUG 1
 #define DEBUG2 1
 #define NSLEEP 100000000 // 0.1s = 1E-1
-#define PROB_90 0.01 // @@@alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
-#define PROB_QUEBRA 0.05 // @@@alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
+#define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
+#define PROB_QUEBRA 0.001 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
 
 
 // Variáveis globais
@@ -23,9 +23,13 @@ extern Rank rankFinal;
 extern bool ultimasVoltas;
 extern bool ciclistaQuebrou;
 
+
 void eliminaQuebra(ciclista *c);
 void eliminaCiclista(ciclista *c, int nCiclista);
 void eliminaCiclistaMarcado(ciclista *c);
+void imprimeVoltasCiclistas(ciclista *c);
+void moveFrente(ciclista *p);
+void moveTemp(ciclista *p);
 
 // Para números negativos, mod é diferente do resultado do operador resto (%)
 // Foi útil para passar os ciclistas para as pistas mais internas, pois
@@ -68,69 +72,10 @@ void * competidor(void * arg)
                 if (DEBUG2) fprintf(stderr, "\t(LOCK) ciclista %d\n", p->num);
 
                 if (pista[y][(x + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
-                    // anda pra frente
-                    pista[y][(x+1)%d] = p;
-                    pista[y][x] = NULL;
-                    p->px = (x+1)%d;
+                    moveFrente(p);
                 }
                 else { // Caso 1: a posição da frente está ocupada
-                    if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1)\n", p->num);
-                    int j;
-                    bool achouPistaExt = false; // Tem pista externa livre?
-                    bool achouEspacoFrente = false; // Tem espaço na pista da frente?
-                    for (int i = y + 1; i < 10; i++) { // Procura se há pista externa livre
-                        if (pista[i][x] == NULL) {
-                            achouPistaExt = true;
-                            break;
-                        }
-                    }
-                    for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
-                        if (pista[j][(x+1)%d] == NULL) {
-                            achouEspacoFrente = true;
-                            break;
-                        }
-                    }
-
-                    // Caso 1.1: ultrapassagem é possível ---> ultrapassa com posição final (j,x+1); j é uma pista externa livre
-                    if (achouPistaExt && achouEspacoFrente) {
-                        if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1)\n", p->num);
-                        if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1) j: %d\n", p->num, j);
-                        pista[j][(x+1)%d] = p;
-                        pista[y][x] = NULL;
-                        p->px = (x+1)%d;
-                        p->py = j;
-                    }
-                    else { // Caso 1.2: ultrapassagem não é possível ---> unlock/sleep/lock até o cara da frente terminar o round
-                            // esperar o cara da frente terminar o round leva a livelock (pode ser um cara que avançou e parou ali)
-                            // verificar novamente se é possível ultrapassar
-                            // se realmente não for possível, reduzir a velocidade
-                            int countErros = 0; // Eu fiz temporariamente para achar um livelock (depois eu removo)
-                        while (pista[y][(x+1)%d] != NULL &&
-                            pista[y][(x+1)%d]->roundFeito == false) {
-                                if (DEBUG) fprintf(stderr, "\t(UNLOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito);
-                                pthread_mutex_unlock(&mutex);
-                                nanosleep(&ts, NULL);
-                                pthread_mutex_lock(&mutex);
-                                // if (DEBUG) fprintf(stderr, "\t(LOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito); //GDB SEGFAULT
-                                countErros++;
-                                if (countErros > 100) {
-                                    if (DEBUG) fprintf(stderr, "\t(ERRO) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito);
-                                    visualizadorStderr();
-                                    exit(1);
-                                }
-                        }
-                        if (pista[y][(x+1)%d] == NULL) { // casa da frente liberou
-                            // anda pra frente
-                            pista[y][(x+1)%d] = p;
-                            pista[y][x] = NULL;
-                            p->px = (x+1)%d;
-                        }
-                        else { // casa da frente está ocupada
-                            // não faz nada
-                            if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.2) (VELOCIDADE REDUZIDA -> NÃO ANDOU)\n", p->num);
-                        }
-                    }
-                    if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1 saída) j: %d\n", p->num, j);
+                    moveTemp(p);
                 }
                 if (DEBUG2) fprintf(stderr, "\tciclista %d (saída 2) (%d, %d)\n", p->num, p->py, p->px);
 
@@ -219,7 +164,6 @@ void * juiz(void * arg)
     int maxVolta = 0; // Máximo das voltas locais dos ciclistas
     int ultimaVoltaDeEliminacao = 0; // Menor volta local do coordenador
     int maiorVolta = 0; // Maior volta local do coordenador
-    bool mudouMenorVolta;
 
     while (true) {
         if (DEBUG2) fprintf(stderr, "\t\t\t(ini loop Coordenador)\n");
@@ -232,14 +176,8 @@ void * juiz(void * arg)
             if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste quebra)\n");
             if (ciclistaQuebrou) // elimina todos os ciclistas que quebraram (se quebrou, está na linha de chegada)
                 eliminaQuebra(c);
-            // verifica se tem algum ciclista marcado para eliminação na linha de chegada
-            // if (ciclistaMarcado)
-                eliminaCiclistaMarcado(c);
 
-            // Procura eliminações atrasadas
-            // if (ultimaVoltaDeEliminacao > 0 && ultimaVoltaDeEliminacao%2 == 0) {
-            //
-            // }
+            eliminaCiclistaMarcado(c); // verifica se tem algum ciclista marcado para eliminação na linha de chegada
 
             if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @1\n");
             minVolta = maxVolta;
@@ -248,72 +186,62 @@ void * juiz(void * arg)
                 if (minVolta > p->voltas) minVolta = p->voltas;
             }
             if (maiorVolta != maxVolta) maiorVolta = maxVolta;
-            if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @2\n");
-
             fprintf(stderr, "\t\t\t(Coordenador teste)  Teste volta -> ultimaVoltaDeEliminacao: %d, minVolta: %d\n", ultimaVoltaDeEliminacao, minVolta);
             while (minVolta > 0 && ultimaVoltaDeEliminacao < minVolta) {
-                if (DEBUG2)
-                    fprintf(stderr, "\t\t\t(Coordenador teste) loop volta de eliminacao <<<<<<<<<<<<<<\n");
-
-                // Eliminação com um while, incrementando volta (para tratar de eliminações em espera)
                 ultimaVoltaDeEliminacao++; // terminou uma volta
+                if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) loop volta de eliminacao <<<<<<<<<<<<<<\n");
+                // Eliminação com um while, incrementando volta (para tratar de eliminações em espera)
                 imprimeRank(L, ultimaVoltaDeEliminacao);
-                if (ultimaVoltaDeEliminacao%2 == 0) {
-                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @4\n");
-
+                if (ultimaVoltaDeEliminacao%2 == 0) { // Eliminação
+                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Volta de eliminacao\n");
+                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Voltas dos ciclistas ativos\n");
+                    imprimeVoltasCiclistas(c);
                     imprimeRank(L, ultimaVoltaDeEliminacao);
-                    if (ultimaVoltaDeEliminacao%2 == 0) { // Eliminação
-                        int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao);
-                        printf(">>>> Ultimo colocado (Eliminado): %d\n", ultimo);
+                    int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao); printf(">>>> Ultimo colocado (Eliminado): %d\n", ultimo);
+                    eliminaCiclista(c, ultimo);
+                    nCiclistasAtivos--;
+                    fprintf(stderr, "imprimeRank final (volta %d) / total de ciclistas ativos: %d\n", ultimaVoltaDeEliminacao, nCiclistasAtivos);
+                    imprimeRankFinal(rankFinal);
+
+                    if (nCiclistasAtivos == 1) { // fim da corrida
+                        ultimo = novoUltimoColocado(L, ultimaVoltaDeEliminacao, ultimo);
                         eliminaCiclista(c, ultimo);
-                        nCiclistasAtivos--;
-                        fprintf(stderr, "imprimeRank final (volta %d) / total de ciclistas ativos: %d\n", ultimaVoltaDeEliminacao, nCiclistasAtivos);
-                        imprimeRankFinal(rankFinal);
-
-                        if (nCiclistasAtivos == 1) { // fim da corrida
-                            ultimo = novoUltimoColocado(L, ultimaVoltaDeEliminacao, ultimo);
-                            eliminaCiclista(c, ultimo);
-                            fprintf(stderr, ">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
-                            printf(">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
-                            return NULL;
+                        fprintf(stderr, ">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
+                        printf(">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
+                        return NULL;
+                    }
+                    else if (nCiclistasAtivos == 2) { // sorteio 90km/h
+                        if (DEBUG) fprintf(stderr, ">>>>> 2 últimas voltas\n");
+                        ultimasVoltas = true;
+                        if (randReal(0, 1) < PROB_90) {
+                            tem90 = true;
+                            dt_base = 3;
+                            if (randReal(0, 1) < 0.5) // 50% de chances de ser o 1º
+                                nCiclista90 = c->prox->num;
+                            else
+                                nCiclista90 = c->prox->prox->num; // será o 2º
+                            if (DEBUG) fprintf(stderr, "\tO ciclista sorteado p/ ter 90km/h foi: %d\n", nCiclista90);
                         }
-                        else if (nCiclistasAtivos == 2) { // sorteio 90km/h
-                            if (DEBUG) fprintf(stderr, ">>>>> 2 últimas voltas\n");
-                            ultimasVoltas = true;
-                            if (randReal(0, 1) < PROB_90) {
-                                tem90 = true;
-                                dt_base = 3;
-                                if (randReal(0, 1) < 0.5) // 50% de chances de ser o 1º
-                                    nCiclista90 = c->prox->num;
-                                else
-                                    nCiclista90 = c->prox->prox->num; // será o 2º
-                                if (DEBUG) fprintf(stderr, "\tO ciclista sorteado p/ ter 90km/h foi: %d\n", nCiclista90);
-                            }
-
-                        }
-                        // Remover as voltas anteriores da ED
-                            // Alternativa é eliminar as voltas ímpares assim que imprimir o rank
-                            // Descobrir na ED os últimos colocados OK
-                                // Se houver mais de um, sortear algum OK
-                        // Eliminar o último colocado
-                            // Eliminação: remover sua posição da pista, parar a thread, destrui-la, remover da lista de threads
-                        // Eliminar da ED a volta mais antiga
-                        if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @5\n");
 
                     }
+                    // Remover as voltas anteriores da ED
+                        // Alternativa é eliminar as voltas ímpares assim que imprimir o rank
+                        // Descobrir na ED os últimos colocados OK
+                            // Se houver mais de um, sortear algum OK
+                    // Eliminar o último colocado
+                        // Eliminação: remover sua posição da pista, parar a thread, destrui-la, remover da lista de threads
+                    // Eliminar da ED a volta mais antiga
+                    if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @5\n");
                 }
                 tempo++;
                 ciclistaQuebrou = false;
                 }
-                // elimina o último colocado
+                usleep(100000);
+                printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
+                fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
+                visualizador();
+                visualizadorStderr();
             }
-            // ultimaVoltaDeEliminacao
-            usleep(100000);
-            printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
-            fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
-            visualizador();
-            visualizadorStderr();
-
 
         for (ciclista * p = cab->prox; p != cab; p = p->prox) {
             p->Continue = 1;
@@ -461,4 +389,85 @@ void eliminaQuebra(ciclista *c) {
             anterior = p;
     }
     fprintf(stderr, "\t\t\t\t\t(coordenador) fim função eliminaQuebra\n");
+}
+
+// para Debug apenas (remover)
+void imprimeVoltasCiclistas(ciclista *c) {
+    for (ciclista * p = c->prox; p != cab; p = p->prox) {
+        fprintf(stderr, "[DEBUG] voltas de cada ciclista em volta de eliminacao\n");
+        if (DEBUG2) {
+            fprintf(stderr, "\tciclista %d, volta: %d\n", p->num, p->voltas);
+        }
+    }
+}
+
+// anda pra frente
+void moveFrente(ciclista *p) {
+    pista[p->py][(p->px+1)%d] = p;
+    pista[p->py][p->px] = NULL;
+    p->px = (p->px+1)%d;
+}
+
+void moveTemp(ciclista *p) {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
+
+    if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1)\n", p->num);
+    int j;
+    bool achouPistaExt = false; // Tem pista externa livre?
+    bool achouEspacoFrente = false; // Tem espaço na pista da frente?
+    for (int i = p->py + 1; i < 10; i++) { // Procura se há pista externa livre
+        if (pista[i][p->px] == NULL) {
+            achouPistaExt = true;
+            break;
+        }
+    }
+    for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
+        if (pista[j][(p->px+1)%d] == NULL) {
+            achouEspacoFrente = true;
+            break;
+        }
+    }
+
+    // Caso 1.1: ultrapassagem é possível ---> ultrapassa com posição final (j,x+1); j é uma pista externa livre
+    if (achouPistaExt && achouEspacoFrente) {
+        if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1)\n", p->num);
+        if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1) j: %d\n", p->num, j);
+        pista[j][(p->px+1)%d] = p;
+        pista[p->py][p->px] = NULL;
+        p->px = (p->px+1)%d;
+        p->py = j;
+    }
+    else { // Caso 1.2: ultrapassagem não é possível ---> unlock/sleep/lock até o cara da frente terminar o round
+            // esperar o cara da frente terminar o round leva a livelock (pode ser um cara que avançou e parou ali)
+            // verificar novamente se é possível ultrapassar
+            // se realmente não for possível, reduzir a velocidade
+            int countErros = 0; // Eu fiz temporariamente para achar um livelock (depois eu removo)
+        while (pista[p->py][(p->px+1)%d] != NULL &&
+            pista[p->py][(p->px+1)%d]->roundFeito == false) {
+                if (DEBUG) fprintf(stderr, "\t(UNLOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[p->py][(p->px+1)%d]->num, pista[p->py][(p->px+1)%d]->roundFeito);
+                pthread_mutex_unlock(&mutex);
+                nanosleep(&ts, NULL);
+                pthread_mutex_lock(&mutex);
+                // if (DEBUG) fprintf(stderr, "\t(LOCK) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[y][(x+1)%d]->num, pista[y][(x+1)%d]->roundFeito); //GDB SEGFAULT
+                countErros++;
+                if (countErros > 100) {
+                    if (DEBUG) fprintf(stderr, "\t(ERRO) ciclista %d (Caso 1.2) %d (original: %d)\n", p->num, pista[p->py][(p->px+1)%d]->num, pista[p->py][(p->px+1)%d]->roundFeito);
+                    visualizadorStderr();
+                    exit(1);
+                }
+        }
+        if (pista[p->py][(p->px+1)%d] == NULL) { // casa da frente liberou
+            // anda pra frente
+            pista[p->py][(p->px+1)%d] = p;
+            pista[p->py][p->px] = NULL;
+            p->px = (p->px+1)%d;
+        }
+        else { // casa da frente está ocupada
+            // não faz nada
+            if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.2) (VELOCIDADE REDUZIDA -> NÃO ANDOU)\n", p->num);
+        }
+    }
+    if (DEBUG2) fprintf(stderr, "\tciclista %d (Caso 1.1 saída) j: %d\n", p->num, j);
 }

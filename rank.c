@@ -99,6 +99,25 @@ void imprimeRank(ListaRank L, int volta) {
     printf("\n");
 }
 
+// Imprime na saíade de erro a lista de rank de uma volta específica
+void imprimeRankStderr(ListaRank L, int volta) {
+    Rank R = NULL;
+    for (ListaRank L1 = L; L1 != NULL; L1 = L1->prox)
+    if (L1->rank->volta == volta) {
+        R = L1->rank;
+        break;
+    }
+    if (R == NULL) {
+        fprintf(stderr, "ERRO! Volta não encontrada na lista de ranks.\n");
+        return;
+    }
+    fprintf(stderr, "Ciclic\tPos\tTempo\n");
+    for (int i = 0; i < R->n; i++) {
+        fprintf(stderr, "%d\t%d\t%d\n", R->nCiclista[i], i+1, R->t[i]);
+    }
+    fprintf(stderr, "\n");
+}
+
 // Imprime a lista de rank final
 void imprimeRankFinal(Rank R) {
     printf("Ciclic\tPos\tTempo\n");
@@ -106,6 +125,15 @@ void imprimeRankFinal(Rank R) {
         printf("%d\t%d\t%d\n", R->nCiclista[i], R->n - i, R->t[i]);
     }
     printf("\n");
+}
+
+// Imprime a lista de rank final
+void imprimeStderrRankFinal(Rank R) {
+    fprintf(stderr, "Ciclic\tPos\tTempo\n");
+    for (int i = R->n - 1; i >= 0; i--) {
+        fprintf(stderr, "%d\t%d\t%d\n", R->nCiclista[i], R->n - i, R->t[i]);
+    }
+    fprintf(stderr, "\n");
 }
 
 // Recebe uma ListaRank L e uma volta e retorna um ponteiro para o Rank
