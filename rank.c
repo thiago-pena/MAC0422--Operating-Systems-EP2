@@ -77,7 +77,7 @@ ListaRank RemoveRank(ListaRank lista) {
     return lista;
 }
 
-// Recebe uma ListaRank L e remove os rank menores que volta
+// Recebe uma ListaRank L e remove os rank menores que 'volta'
 ListaRank RemoveRanksVolta(ListaRank L, int volta) {
     if (L == NULL) return NULL;
     if (L != NULL && L->rank != NULL && L->prox != NULL && L->rank->volta < volta) {
@@ -88,8 +88,8 @@ ListaRank RemoveRanksVolta(ListaRank L, int volta) {
 
 // Destrói uma lista de ranks
 void DestroiListaRank(ListaRank L) {
-    while (L->rank != NULL)
-        RemoveRank(L);
+    while (L != NULL && L->rank != NULL)
+        L = RemoveRank(L);
 }
 
 // Imprime a lista de rank de uma volta específica

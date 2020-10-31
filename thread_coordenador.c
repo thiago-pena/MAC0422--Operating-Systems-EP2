@@ -72,6 +72,7 @@ void * juiz(void * arg)
                         eliminaCiclista(c, ultimo);
                         fprintf(stderr, ">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
                         printf(">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
+                        DestroiListaRank(L);
                         return NULL;
                     }
                     else if (nCiclistasAtivos == 2) { // sorteio 90km/h
