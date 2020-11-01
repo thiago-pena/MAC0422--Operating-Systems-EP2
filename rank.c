@@ -7,6 +7,7 @@ Rank CriaRank(int volta, int size) {
     R->volta = volta;
     R->n = 0;
     R->nCiclista = malloc(size * sizeof(int));
+
     R->t = malloc(size * sizeof(int));
     R->size = size;
     return R;

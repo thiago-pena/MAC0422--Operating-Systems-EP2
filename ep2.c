@@ -34,6 +34,8 @@ long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois
 ListaRank L;
 Rank rankFinal;
 
+void destroiPista();
+
 int main(int argc, char const *argv[]) {
     srand(SEED); // seed da bib rand
 
@@ -146,5 +148,18 @@ int main(int argc, char const *argv[]) {
     printf("Rank final\n");
     imprimeRankFinal(rankFinal);
     printf("Fim do ep\n");
+
+    pthread_mutex_destroy(&mutex);
+    destroiPista();
+    DestroiListaRank(L);
+    DestroiRank(rankFinal);
+    free(cab);
     return 0;
+}
+
+void destroiPista() {
+    for (int i = 0; i < 10; i++) {
+        free(pista[i]);
+    }
+    free(pista);
 }

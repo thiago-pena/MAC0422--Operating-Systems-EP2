@@ -4,7 +4,7 @@
 #define DEBUG 1
 #define DEBUG2 1
 #define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
-#define NSLEEP 10000 // 0.01s = 1E-2 = 10ms
+#define NSLEEP 100000 // 0.01s = 1E-2 = 10ms
 
 // Variáveis globais
 extern ciclista ***pista;
@@ -72,8 +72,8 @@ void * juiz(void * arg)
                         eliminaCiclista(c, ultimo);
                         fprintf(stderr, ">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
                         printf(">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", ultimo);
-                        DestroiListaRank(L);
-                        return NULL;
+                        // return NULL;
+                        pthread_exit(0);
                     }
                     else if (nCiclistasAtivos == 2) { // sorteio 90km/h
                         ultimasVoltas = true;
