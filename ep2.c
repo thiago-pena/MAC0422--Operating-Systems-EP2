@@ -154,7 +154,7 @@ int main(int argc, char const *argv[]) {
     printf("Rank final\n");
     imprimeRankFinal(rankFinal);
     printf("\nRank de quebras\n");
-    imprimeRankFinal(rankQuebras);
+    imprimeRankQuebras(rankQuebras);
     printf("Fim do ep\n");
 
     pthread_mutex_destroy(&mutex);

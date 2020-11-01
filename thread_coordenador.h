@@ -15,5 +15,6 @@ void visualizadorStderr();
 void eliminaQuebra(ciclista *c);
 void eliminaCiclista(ciclista *c, int nCiclista);
 void imprimeVoltasCiclistas(ciclista *c);
+void imprimeMutexLocked();
 
 #endif

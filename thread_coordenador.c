@@ -94,7 +94,7 @@ void * juiz(void * arg)
                 tempo += 20;
             else
                 tempo += 60;
-            usleep(100000);
+            usleep(10000);
             printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             visualizador();
@@ -109,6 +109,8 @@ void * juiz(void * arg)
             }
             fprintf(stderr, "Teste RemoveRanksVolta fim\n");
         }
+
+        imprimeMutexLocked(); // debug de mutexes
 
         for (ciclista * p = cab->prox; p != cab; p = p->prox) {
             p->Continue = 1;
@@ -230,4 +232,14 @@ void imprimeVoltasCiclistas(ciclista *c) {
             fprintf(stderr, "\tciclista %d, volta: %d\n", p->num, p->voltas);
         }
     }
+}
+
+void imprimeMutexLocked() {
+    fprintf(stderr, "Teste mutexes\n");
+    for (int j = 0; j < 10; j++)
+        for (int i = 0; i < d; i++)
+            if (pthread_mutex_trylock(&mutex2[j][i]) == 0)
+                pthread_mutex_unlock(&mutex2[j][i]);
+            else
+                fprintf(stderr, "\tmutex (%d, %d) locked\n", j, i);
 }

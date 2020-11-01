@@ -112,25 +112,6 @@ void imprimeRank(ListaRank L, int volta) {
     printf("\n");
 }
 
-// Imprime a lista de rank de quebras
-void imprimeRankQuebras(ListaRank L, int volta) {
-    Rank R = NULL;
-    for (ListaRank L1 = L; L1 != NULL; L1 = L1->prox)
-        if (L1->rank->volta == volta) {
-            R = L1->rank;
-            break;
-        }
-    if (R == NULL) {
-        printf("ERRO! Volta não encontrada na lista de ranks. (volta %d)\n", volta);
-        return;
-    }
-    printf("Ciclic\tPos\tVolta\n");
-    for (int i = 0; i < R->n; i++) {
-        printf("%d\t%d\t%d\n", R->nCiclista[i], i+1, R->t[i]);
-    }
-    printf("\n");
-}
-
 // Imprime na saíade de erro a lista de rank de uma volta específica
 void imprimeStderrRank(ListaRank L, int volta) {
     Rank R = NULL;
@@ -155,6 +136,15 @@ void imprimeRankFinal(Rank R) {
     printf("Ciclic\tPos\tTempo\n");
     for (int i = R->n - 1; i >= 0; i--) {
         printf("%d\t%d\t%d\n", R->nCiclista[i], R->n - i, R->t[i]);
+    }
+    printf("\n");
+}
+
+// Imprime a lista de rank de quebras
+void imprimeRankQuebras(Rank R) {
+    printf("Ciclic\tVolta da quebra\n");
+    for (int i = R->n - 1; i >= 0; i--) {
+        printf("%d\t%d\n", R->nCiclista[i], R->t[i]);
     }
     printf("\n");
 }
