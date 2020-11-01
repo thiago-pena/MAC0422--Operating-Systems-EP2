@@ -15,6 +15,7 @@ extern _Atomic bool tem90;
 extern int nCiclista90; // número do ciclista que terá 90km/h, se ocorrer
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t **mutex2;
 extern _Atomic long long int tempo;
 extern ListaRank L;
 extern Rank rankFinal;
@@ -44,25 +45,36 @@ void * competidor(void * arg)
                 (p->dt)--;
             }
             else { // A velocidade permite o ciclista avançar a cada iteração
-                pthread_mutex_lock(&mutex);
-                if (pista[p->py][(p->px + 1)%d] == NULL) // Caso 0: a posição da frente está livre
+                // pthread_mutex_lock(&mutex);
+                bool avancou = false;
+                pthread_mutex_lock(&mutex2[p->py][(p->px + 1)%d]);
+                fprintf(stderr, "LOCK1   (%d, %d) ciclista %d\n", p->py, (p->px + 1)%d, p->num);
+                if (pista[p->py][(p->px + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
                     moveFrente(p);
-                else // Caso 1: a posição da frente está ocupada
+                    fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d\n", p->py, p->px, p->num);
+                    pthread_mutex_unlock(&mutex2[p->py][p->px]);
+                    avancou = true;
+                }
+
+                if (!avancou) {// Caso 1: a posição da frente está ocupada
+                    fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d\n", p->py, (p->px + 1)%d, p->num);
+                    pthread_mutex_unlock(&mutex2[p->py][(p->px + 1)%d]);
                     moveTemp(p);
+                }
                 if (p->voltas >= 4) {
                     fprintf(stderr, "[DEBUG erro] ciclista: %d, p->voltas: %d, p->px: %d\n", p->num, p->voltas, p->px);
                 }
                 if (p->px == 0)// Verifica se completou uma volta para alterar a velocidade
                     tratalinhaDechegada(p);
                 p->dt = dt_base - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
-                movePistaInterna(p);
-                pthread_mutex_unlock(&mutex);
+                // movePistaInterna(p);
+                // pthread_mutex_unlock(&mutex);
             }
             p->roundFeito = true;
             nanosleep(&ts, NULL);
-            pthread_mutex_lock(&mutex);
+            // pthread_mutex_lock(&mutex);
             movePistaInterna2(p);
-            pthread_mutex_unlock(&mutex);
+            // pthread_mutex_unlock(&mutex);
         }
 
         // Barreira de sincronização
@@ -100,38 +112,60 @@ void moveTemp(ciclista *p) {
     ts.tv_sec = 0;
     ts.tv_nsec = NSLEEP;
 
-    int j;
+    int i, j;
     bool achouPistaExt = false; // Tem pista externa livre?
     bool achouEspacoFrente = false; // Tem espaço na pista da frente?
-    for (int i = p->py + 1; i < 10; i++) { // Procura se há pista externa livre
+    for (i = p->py + 1; i < 10; i++) { // Procura se há pista externa livre
+        pthread_mutex_lock(&mutex2[i][p->px]);
+        fprintf(stderr, "LOCK2i   (%d, %d) ciclista %d\n", i, p->px, p->num);
         if (pista[i][p->px] == NULL) {
             achouPistaExt = true;
             break;
         }
-    }
-    for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
-        if (pista[j][(p->px+1)%d] == NULL) {
-            achouEspacoFrente = true;
-            break;
-        }
+        fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d\n", i, p->px, p->num);
+        pthread_mutex_unlock(&mutex2[i][p->px]);
     }
 
-    // Caso 1.1: ultrapassagem é possível ---> ultrapassa com posição final (j,x+1); j é uma pista externa livre
-    if (achouPistaExt && achouEspacoFrente) {
-        pista[j][(p->px+1)%d] = p;
-        pista[p->py][p->px] = NULL;
-        p->px = (p->px+1)%d;
-        p->py = j;
+    if (achouPistaExt) {
+        for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
+            pthread_mutex_lock(&mutex2[j][(p->px+1)%d]);
+            fprintf(stderr, "LOCK2j   (%d, %d) ciclista %d\n", j, (p->px+1)%d, p->num);
+            if (pista[j][(p->px+1)%d] == NULL) {
+                achouEspacoFrente = true;
+                pista[j][(p->px+1)%d] = p;
+                pista[p->py][p->px] = NULL;
+                p->px = (p->px+1)%d;
+                p->py = j;
+                break;
+            }
+            fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d\n", j, (p->px+1)%d, p->num);
+            pthread_mutex_unlock(&mutex2[j][(p->px+1)%d]);
+        }
     }
-    else { // Caso 1.2: ultrapassagem não é possível ---> unlock/sleep/lock até o cara da frente terminar o round
+    if (achouPistaExt && !achouEspacoFrente) {
+        fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d\n", i, p->px, p->num);
+        pthread_mutex_unlock(&mutex2[i][p->px]);
+    }
+    if (achouEspacoFrente) {
+        fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d\n", i, mod(p->px - 1, d), p->num);
+        pthread_mutex_unlock(&mutex2[i][mod(p->px - 1, d)]);
+        fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d\n", j, p->px, p->num);
+        pthread_mutex_unlock(&mutex2[j][p->px]);
+    }
+
+
+    // Caso 1.1: ultrapassagem é possível ---> ultrapassa com posição final (j,x+1); j é uma pista externa livre
+
+    if (!achouEspacoFrente) { // Caso 1.2: ultrapassagem não é possível ---> unlock/sleep/lock até o cara da frente terminar o round
             // esperar o cara da frente terminar o round leva a livelock (pode ser um cara que avançou e parou ali)
             // verificar novamente se é possível ultrapassar
             // se realmente não for possível, reduzir a velocidade
+        pthread_mutex_lock(&mutex2[p->py][(p->px+1)%d]);
         while (pista[p->py][(p->px+1)%d] != NULL &&
             pista[p->py][(p->px+1)%d]->roundFeito == false) {
-                pthread_mutex_unlock(&mutex);
+                pthread_mutex_unlock(&mutex2[p->py][(p->px+1)%d]);
                 nanosleep(&ts, NULL);
-                pthread_mutex_lock(&mutex);
+                pthread_mutex_lock(&mutex2[p->py][(p->px+1)%d]);
         }
         if (pista[p->py][(p->px+1)%d] == NULL) { // casa da frente liberou
             // anda pra frente
@@ -143,12 +177,13 @@ void moveTemp(ciclista *p) {
             // não faz nada
             if (DEBUG) fprintf(stderr, "\tciclista %d (Caso 1.2) (VELOCIDADE REDUZIDA -> NÃO ANDOU)\n", p->num);
         }
+        pthread_mutex_unlock(&mutex2[p->py][(p->px+1)%d]);
     }
 }
 
 void tratalinhaDechegada(ciclista *p) {
     bool quebrou = false;
-    if (DEBUG) fprintf(stderr, "Ciclista: %d (funcao tratalinhaDechegada), volta: %d, p->px: %d\n", p->num, p->voltas, p->px);
+    // if (DEBUG) fprintf(stderr, "Ciclista: %d (funcao tratalinhaDechegada), volta: %d, p->px: %d\n", p->num, p->voltas, p->px);
     p->linhaDeChegada = true;
     (p->voltas)++; // completou uma volta ou iniciou a corrida pós largada
     if (p->voltas > 0 && nCiclistasAtivos > 5 && (p->voltas)%6 == 0) { // verificar se há quebra
@@ -161,9 +196,9 @@ void tratalinhaDechegada(ciclista *p) {
         }
     }
     if (!quebrou) { // não quebrou
-        if (DEBUG) fprintf(stderr, "Ciclista: %d (x = 0), volta: %d\n", p->num, p->voltas);
-        printf(">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
-        fprintf(stderr, ">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
+        // if (DEBUG) fprintf(stderr, "Ciclista: %d (x = 0), volta: %d\n", p->num, p->voltas);
+        // printf(">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
+        // fprintf(stderr, ">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
         InsereCiclista(L, n, p->voltas, p->num, tempo);
         velocidade(p);
         // @@@ preciso registrar no ranqueamento com um mutex?
@@ -187,20 +222,29 @@ void movePistaInterna(ciclista *p) {
         pista[yMaisInterno][p->px] = p;
         p->py = yMaisInterno;
     }
+    // pthread_mutex_lock(&mutex2[][]);
+    // pthread_mutex_unlock(&mutex2[][]);
 }
 
+
 void movePistaInterna2(ciclista *p) {
-    int yMaisInterno = p->py;
-    for (int i = p->py; i >= 0; i--) {
+    bool achou = false;
+    int i = p->py;
+    for ( ; i >= 0; i--) {
+        pthread_mutex_lock(&mutex2[i][p->px]);
         if (pista[i][p->px] == NULL) {
-            yMaisInterno = i;
+            achou = true;
             break;
         }
+        pthread_mutex_unlock(&mutex2[i][p->px]);
     }
-    if (yMaisInterno < p->py) {
-        pista[p->py][p->px] = NULL;
-        pista[yMaisInterno][p->px] = p;
-        p->py = yMaisInterno;
+    if (achou) {
+        if (i < p->py) {
+            pista[p->py][p->px] = NULL;
+            pista[i][p->px] = p;
+            p->py = i;
+        }
+        pthread_mutex_unlock(&mutex2[i][p->px]);
     }
 }
 

@@ -15,6 +15,7 @@ extern _Atomic bool tem90;
 extern int nCiclista90; // número do ciclista que terá 90km/h, se ocorrer
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t **mutex2;
 extern _Atomic long long int tempo;
 extern ListaRank L;
 extern Rank rankFinal;

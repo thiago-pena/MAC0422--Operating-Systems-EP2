@@ -29,6 +29,7 @@ int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
 pthread_mutex_t mutex;
+pthread_mutex_t **mutex2;
 int maiorVolta, menorVolta;
 _Atomic long long int tempo = 0; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
 ListaRank L;
@@ -54,14 +55,17 @@ int main(int argc, char const *argv[]) {
 
     /*Cria pista como uma matriz de ponteiros*/
     pista = malloc(10 * sizeof(ciclista**));
+    mutex2 = malloc(10 * sizeof(pthread_mutex_t *));
     for (int i = 0; i < 10; i++) {
         pista[i] = malloc(d * sizeof(ciclista*));
+        mutex2[i] = malloc(d * sizeof(mutex));
     }
 
     /*Declara posições da pista vazias como NULLs*/
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < d; j++) {
             pista[i][j] = NULL;
+            pthread_mutex_init(&mutex2[i][j], NULL);
         }
     }
 
