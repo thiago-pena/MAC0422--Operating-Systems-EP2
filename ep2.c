@@ -33,6 +33,7 @@ int maiorVolta, menorVolta;
 long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
 ListaRank L;
 Rank rankFinal;
+Rank rankQuebras;
 
 void destroiPista();
 
@@ -49,6 +50,7 @@ int main(int argc, char const *argv[]) {
     L = CriaListaRank();
     // Cria lista de Rank final
     rankFinal = CriaRank(0, n);
+    rankQuebras = CriaRank(0, n);
 
     /*Cria pista como uma matriz de ponteiros*/
     pista = malloc(10 * sizeof(ciclista**));
@@ -147,12 +149,15 @@ int main(int argc, char const *argv[]) {
 
     printf("Rank final\n");
     imprimeRankFinal(rankFinal);
+    printf("\nRank de quebras\n");
+    imprimeRankFinal(rankQuebras);
     printf("Fim do ep\n");
 
     pthread_mutex_destroy(&mutex);
     destroiPista();
     DestroiListaRank(L);
     DestroiRank(rankFinal);
+    DestroiRank(rankQuebras);
     free(cab);
     return 0;
 }

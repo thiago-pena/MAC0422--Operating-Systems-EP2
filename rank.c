@@ -112,6 +112,25 @@ void imprimeRank(ListaRank L, int volta) {
     printf("\n");
 }
 
+// Imprime a lista de rank de quebras
+void imprimeRankQuebras(ListaRank L, int volta) {
+    Rank R = NULL;
+    for (ListaRank L1 = L; L1 != NULL; L1 = L1->prox)
+        if (L1->rank->volta == volta) {
+            R = L1->rank;
+            break;
+        }
+    if (R == NULL) {
+        printf("ERRO! Volta não encontrada na lista de ranks. (volta %d)\n", volta);
+        return;
+    }
+    printf("Ciclic\tPos\tVolta\n");
+    for (int i = 0; i < R->n; i++) {
+        printf("%d\t%d\t%d\n", R->nCiclista[i], i+1, R->t[i]);
+    }
+    printf("\n");
+}
+
 // Imprime na saíade de erro a lista de rank de uma volta específica
 void imprimeStderrRank(ListaRank L, int volta) {
     Rank R = NULL;
@@ -187,6 +206,7 @@ int ultimoColocado(ListaRank L, int volta) {
 // Recebe uma lista de ranks por volta, uma volta e um número de ciclista.
 // A função remove o ciclista do rank dessa volta e retorna um novo último colocado
 int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
+    printf("novoUltimoColocado");
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
         printf("ERRO! Volta não encontrada na função novoUltimoColocado. (volta %d)\n", volta);

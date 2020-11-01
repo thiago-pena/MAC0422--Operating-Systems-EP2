@@ -4,7 +4,7 @@
 #define DEBUG 1
 #define DEBUG2 1
 #define NSLEEP 100000000 // 0.1s = 1E-1
-#define PROB_QUEBRA 0.001 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
+#define PROB_QUEBRA 0.99 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
 
 // Variáveis globais
 extern ciclista ***pista;
@@ -18,6 +18,7 @@ extern pthread_mutex_t mutex;
 extern long int tempo;
 extern ListaRank L;
 extern Rank rankFinal;
+extern Rank rankQuebras;
 extern bool ultimasVoltas;
 extern bool ciclistaQuebrou;
 
@@ -150,9 +151,10 @@ void tratalinhaDechegada(ciclista *p) {
     if (DEBUG) fprintf(stderr, "Ciclista: %d (funcao tratalinhaDechegada), volta: %d, p->px: %d\n", p->num, p->voltas, p->px);
     p->linhaDeChegada = true;
     (p->voltas)++; // completou uma volta ou iniciou a corrida pós largada
-    if (nCiclistasAtivos > 5 && (p->voltas)%6 == 0) { // verificar se há quebra
+    if (p->voltas > 0 && nCiclistasAtivos > 5 && (p->voltas)%6 == 0) { // verificar se há quebra
         if(randReal(0, 1) < PROB_QUEBRA) {
             ciclistaQuebrou = true;
+            nCiclistasAtivos--;
             p->quebrou = true;
             quebrou = true;
             fprintf(stderr, "Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);

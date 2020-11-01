@@ -18,6 +18,7 @@ extern pthread_mutex_t mutex;
 extern long int tempo;
 extern ListaRank L;
 extern Rank rankFinal;
+extern Rank rankQuebras;
 extern bool ultimasVoltas;
 extern bool ciclistaQuebrou;
 
@@ -95,9 +96,9 @@ void * juiz(void * arg)
                     // Eliminar da ED a volta mais antiga
                     if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @5\n");
                 }
-                tempo++;
                 ciclistaQuebrou = false;
                 }
+                tempo++;
                 usleep(100000);
                 printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
                 fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
@@ -236,7 +237,7 @@ void eliminaQuebra(ciclista *c) {
     ciclista *anterior = c;
     for (ciclista * p = c->prox; p != cab; p = p->prox) {
         if (p->quebrou) {
-            // InsereRankQuebras
+            InsereCiclistaRank(rankQuebras, p->num, p->voltas);
             if (p->eliminar) {
                 fprintf(stderr, "\t(coordenador) novo último colocado (por quebra)\n");
                 // int novoUltimoColocado(ListaRank L, int volta, int numCiclista);
@@ -252,7 +253,6 @@ void eliminaQuebra(ciclista *c) {
             pthread_cancel(q->id); // interrompe a thread
             nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
             free(q);
-            nCiclistasAtivos--;
         }
         else
             anterior = p;

@@ -53,6 +53,9 @@ void DestroiListaRank(ListaRank L);
 // Imprime a lista de rank de uma volta específica
 void imprimeRank(ListaRank L, int volta);
 
+// Imprime a lista de rank de quebras
+void imprimeRankQuebras(ListaRank L, int volta);
+
 // Imprime na saída de erro a lista de rank de uma volta específica
 void imprimeStderrRank(ListaRank L, int volta);
 
