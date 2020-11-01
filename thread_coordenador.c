@@ -44,9 +44,7 @@ void * juiz(void * arg)
         if (true) { // if temporário (código da thread coordenadora)
             if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste quebra)\n");
             if (ciclistaQuebrou) // elimina todos os ciclistas que quebraram (se quebrou, está na linha de chegada)
-                eliminaQuebra(c);
-            eliminaCiclistaMarcado(c); // verifica se tem algum ciclista marcado para eliminação na linha de chegada
-
+            eliminaQuebra(c);
             minVolta = maxVolta;
             for (ciclista * p = c->prox; p != cab; p = p->prox) {
                 if (maxVolta < p->voltas) maxVolta = p->voltas;
@@ -82,38 +80,31 @@ void * juiz(void * arg)
                             tem90 = true;
                             dt_base = 3;
                             if (randReal(0, 1) < 0.5) // 50% de chances de ser o 1º
-                                nCiclista90 = c->prox->num;
+                            nCiclista90 = c->prox->num;
                             else
-                                nCiclista90 = c->prox->prox->num; // será o 2º
+                            nCiclista90 = c->prox->prox->num; // será o 2º
                         }
                     }
-                    // Remover as voltas anteriores da ED
-                        // Alternativa é eliminar as voltas ímpares assim que imprimir o rank
-                        // Descobrir na ED os últimos colocados OK
-                            // Se houver mais de um, sortear algum OK
-                    // Eliminar o último colocado
-                        // Eliminação: remover sua posição da pista, parar a thread, destrui-la, remover da lista de threads
-                    // Eliminar da ED a volta mais antiga
                     if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) @5\n");
                 }
                 ciclistaQuebrou = false;
-                }
-                tempo++;
-                usleep(100000);
-                printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
-                fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
-                visualizador();
-                visualizadorStderr();
-                fprintf(stderr, "Teste RemoveRanksVolta ini\n");
-                if (ultimaVoltaDeEliminacao > 0) {
-                    fprintf(stderr, "volta ini: %d\n", L->rank->volta);
-                    L = RemoveRanksVolta(L, ultimaVoltaDeEliminacao);
-                    fprintf(stderr, "thread volta\n");
-                    fprintf(stderr, "volta fim a: %d\n", L->rank == NULL);
-                    fprintf(stderr, "volta fim: %d\n", L->rank->volta);
-                }
-                fprintf(stderr, "Teste RemoveRanksVolta fim\n");
             }
+            tempo++;
+            usleep(100000);
+            printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
+            fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
+            visualizador();
+            visualizadorStderr();
+            fprintf(stderr, "Teste RemoveRanksVolta ini\n");
+            if (ultimaVoltaDeEliminacao > 0) {
+                fprintf(stderr, "volta ini: %d\n", L->rank->volta);
+                L = RemoveRanksVolta(L, ultimaVoltaDeEliminacao);
+                fprintf(stderr, "thread volta\n");
+                fprintf(stderr, "volta fim a: %d\n", L->rank == NULL);
+                fprintf(stderr, "volta fim: %d\n", L->rank->volta);
+            }
+            fprintf(stderr, "Teste RemoveRanksVolta fim\n");
+        }
 
         for (ciclista * p = cab->prox; p != cab; p = p->prox) {
             p->Continue = 1;
@@ -125,57 +116,57 @@ void * juiz(void * arg)
 
 void visualizador()
 {
-  for (int j = 0; j < d; j++) {
-    printf("---");
-  }
-  printf("\n");
-  for (int i = 0; i < 10; i++) {
-      for (int j = 0; j < d; j++) {
-          if (pista[i][j] != NULL) {
-              printf("%02d",pista[i][j]->num);
-              if (pista[i][j]->velocidade == 1)
-                printf("|");
-              else if (pista[i][j]->velocidade == 2)
-                printf(")");
-              else
-                printf(">");
-          }
-          else printf("  |");
-      }
-      printf("\n");
-      for (int j = 0; j < d; j++) {
+    for (int j = 0; j < d; j++) {
         printf("---");
-      }
-      printf("\n");
-  }
-  printf("\n\n");
+    }
+    printf("\n");
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < d; j++) {
+            if (pista[i][j] != NULL) {
+                printf("%02d",pista[i][j]->num);
+                if (pista[i][j]->velocidade == 1)
+                printf("|");
+                else if (pista[i][j]->velocidade == 2)
+                printf(")");
+                else
+                printf(">");
+            }
+            else printf("  |");
+        }
+        printf("\n");
+        for (int j = 0; j < d; j++) {
+            printf("---");
+        }
+        printf("\n");
+    }
+    printf("\n\n");
 }
 void visualizadorStderr()
 {
-  for (int j = 0; j < d; j++) {
-    fprintf(stderr, "---");
-  }
-  fprintf(stderr, "\n");
-  for (int i = 0; i < 10; i++) {
-      for (int j = 0; j < d; j++) {
-          if (pista[i][j] != NULL) {
-              fprintf(stderr, "%02d",pista[i][j]->num);
-              if (pista[i][j]->velocidade == 1)
-                fprintf(stderr, "|");
-              else if (pista[i][j]->velocidade == 2)
-                fprintf(stderr, ")");
-              else
-                fprintf(stderr, ">");
-          }
-          else fprintf(stderr, "  |");
-      }
-      fprintf(stderr, "\n");
-      for (int j = 0; j < d; j++) {
+    for (int j = 0; j < d; j++) {
         fprintf(stderr, "---");
-      }
-      fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n\n");
+    }
+    fprintf(stderr, "\n");
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < d; j++) {
+            if (pista[i][j] != NULL) {
+                fprintf(stderr, "%02d",pista[i][j]->num);
+                if (pista[i][j]->velocidade == 1)
+                fprintf(stderr, "|");
+                else if (pista[i][j]->velocidade == 2)
+                fprintf(stderr, ")");
+                else
+                fprintf(stderr, ">");
+            }
+            else fprintf(stderr, "  |");
+        }
+        fprintf(stderr, "\n");
+        for (int j = 0; j < d; j++) {
+            fprintf(stderr, "---");
+        }
+        fprintf(stderr, "\n");
+    }
+    fprintf(stderr, "\n\n");
 }
 
 // Recebe um inteiro nCiclista, remove o ciclista com essa numeração da
@@ -203,32 +194,6 @@ void eliminaCiclista(ciclista *c, int nCiclista) {
     fprintf(stderr, "\t\t\t\t\t(coordenador) fim função eliminaCiclista\n");
 }
 
-// Recebe um inteiro nCiclista, remove da estrutura c um ciclista marcado para
-// ser eliminado interrompe sua thread e libera a memória alocada por ele
-void eliminaCiclistaMarcado(ciclista *c) {
-    struct timespec ts;
-    ts.tv_sec = 0;
-    ts.tv_nsec = NSLEEP;
-
-    fprintf(stderr, "\t\t\t\t(coordenador) inicio função eliminaCiclistaMarcado\n");
-    ciclista *q, *anterior;
-    anterior = c;
-    for (q = c->prox; q != cab; q = q->prox) { // encontra a thread do ultimo colocado
-        if (q->eliminar) {
-            pista[q->py][q->px] = NULL;
-            InsereCiclistaRank(rankFinal, q->num, tempo);
-            pthread_cancel(q->id);
-            // Remover da lista de threads
-            anterior->prox = q->prox;
-            nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
-            free(q);
-            break;
-        }
-        anterior = q;
-    }
-    fprintf(stderr, "\t\t\t\t\t(coordenador) fim função eliminaCiclistaMarcado\n");
-}
-
 void eliminaQuebra(ciclista *c) {
     struct timespec ts;
     ts.tv_sec = 0;
@@ -238,13 +203,6 @@ void eliminaQuebra(ciclista *c) {
     for (ciclista * p = c->prox; p != cab; p = p->prox) {
         if (p->quebrou) {
             InsereCiclistaRank(rankQuebras, p->num, p->voltas);
-            if (p->eliminar) {
-                fprintf(stderr, "\t(coordenador) novo último colocado (por quebra)\n");
-                // int novoUltimoColocado(ListaRank L, int volta, int numCiclista);
-                // procura o novo último colocado
-                // marca ele para ser eliminado (a volta deve ser ultimaVoltaDeEliminacao)
-                    // p->eliminar
-            }
             fprintf(stderr, "\t(coordenador) eliminação da quebra ciclista %d\n", p->num);
             ciclista *q = p;
             anterior->prox = p->prox; // Remover da lista de threads
@@ -255,7 +213,7 @@ void eliminaQuebra(ciclista *c) {
             free(q);
         }
         else
-            anterior = p;
+        anterior = p;
     }
     fprintf(stderr, "\t\t\t\t\t(coordenador) fim função eliminaQuebra\n");
 }

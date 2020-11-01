@@ -14,7 +14,6 @@ void visualizador();
 void visualizadorStderr();
 void eliminaQuebra(ciclista *c);
 void eliminaCiclista(ciclista *c, int nCiclista);
-void eliminaCiclistaMarcado(ciclista *c);
 void imprimeVoltasCiclistas(ciclista *c);
 
 #endif
