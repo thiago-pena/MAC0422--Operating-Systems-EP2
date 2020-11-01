@@ -1,0 +1,25 @@
+- Casoalgum ciclista quebre, essa informac ̧ ̃ao deve ser exibida na tela no momento exato em que ele quebrou.
+    - A volta em que ele estava e o identificador dele devem ser informados.
+
+*A cada volta
+Asa ́ıda do seu programa deve ser um relat ́orio informando a cada volta completada,
+as posic ̧ ̃oes detodos os ciclistas naquela volta.
+
+*Final da corrida
+ Ao t ́ermino da corrida (depois que todos os ciclistas passarem pela linhade
+ chegada), o ranqueamento final de todos os ciclistas, e o instante de tempo que
+ cada um cruzou a linhade chegada pela ́ultima vez, tamb ́em deve ser impresso na
+ sa ́ıda (considere que a simulac ̧ ̃ao comec ̧a noinstante de tempo zero).
+Ciclistas que quebrarem devem ser identificados nessa lista final como tendoquebrado
+e, ao inv ́es de mostrar as suas colocac ̧ ̃oes, deve ser informada a volta em que
+eles quebraram.
+
+*Opção de DEBUG
+Seu programa deve ainda permitir uma opc ̧ ̃ao dedebugque informa a cada 60ms
+(e 20ms nas duas ́ultimas voltas, caso algu ́em pedale a 90Km/h) o status de cada
+posic ̧ ̃ao da pista, ou seja, o identificadordo(s) ciclista(s) naquela posic ̧ ̃ao
+ou a informac ̧ ̃ao de que n ̃ao h ́a nenhum ciclista ali.
+
+OBS:
+N ̃ao h ́a um formato padr ̃aoparaasa ́ıda do seu programa.
+Basta que ela informe tudo que foi solicitadono par ́agrafo anterior.

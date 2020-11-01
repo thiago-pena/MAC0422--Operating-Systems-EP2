@@ -11,11 +11,11 @@ extern ciclista ***pista;
 extern ciclista *cab;
 extern int d, n;
 extern _Atomic int nCiclistasAtivos;
-extern bool tem90;
+extern _Atomic bool tem90;
 extern int nCiclista90; // número do ciclista que terá 90km/h, se ocorrer
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
-extern long int tempo;
+extern _Atomic long long int tempo;
 extern ListaRank L;
 extern Rank rankFinal;
 extern Rank rankQuebras;
@@ -89,7 +89,10 @@ void * juiz(void * arg)
                 }
                 ciclistaQuebrou = false;
             }
-            tempo++;
+            if (tem90)
+                tempo += 20;
+            else
+                tempo += 60;
             usleep(100000);
             printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);

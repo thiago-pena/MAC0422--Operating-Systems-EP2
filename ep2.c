@@ -24,13 +24,13 @@ ciclista *cab;
 int d, n;
 _Atomic int nCiclistasAtivos;
 bool ultimasVoltas = false;
-bool tem90 = false;
+_Atomic bool tem90 = false;
 int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
 pthread_mutex_t mutex;
 int maiorVolta, menorVolta;
-long int tempo = 1; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
+_Atomic long long int tempo = 0; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
 ListaRank L;
 Rank rankFinal;
 Rank rankQuebras;
