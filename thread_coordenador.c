@@ -12,8 +12,8 @@ extern ciclista *cab;
 extern int d, n;
 extern _Atomic int nCiclistasAtivos, nEliminados, nQuebras;
 extern int nVoltasTotal;
-extern _Atomic bool tem90;
-extern int nCiclista90; // número do ciclista que terá 90km/h, se ocorrer
+extern bool tem90;
+extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t **mutex2;
@@ -59,7 +59,8 @@ void * juiz(void * arg)
             imprimeVoltasCiclistas(c);
             printf("Loop coordenador (nCiclistasAtivos: %d)\n", nCiclistasAtivos);
             if (maiorVolta > 0) imprimeVoltasListaRank(L);
-            if(!vencedorTerminouProva && maiorVolta == nVoltasTotal) { // Vencedor terminou a prova
+
+            if(!vencedorTerminouProva && maiorVolta >= nVoltasTotal) { // Vencedor terminou a prova (usei >= pois pode haver um ciclista muito rápido que esteja muitas voltas à frente, antes de sabermos nVoltasTotal com absoluta certeza)
                     vencedor = primeiroColocado(L, maiorVolta);
                     eliminaCiclista(c, vencedor);
                     nCiclistasAtivos--;
@@ -82,21 +83,7 @@ void * juiz(void * arg)
                     if (DEBUG) fprintf(stderr, "imprimeRank final (volta %d) / total de ciclistas ativos: %d\n", ultimaVoltaDeEliminacao, nCiclistasAtivos);
                     imprimeRankFinal(rankFinal);
 
-                    if (nVoltasTotal < 0 && nCiclistasAtivos <= 5)
-                        nVoltasTotal = 2*(n - nQuebras - 1);
-
-                    if (nCiclistasAtivos == 2) { // sorteio 90km/h
-                        ultimasVoltas = true;
-                        if (randReal(0, 1) < PROB_90) {
-                            tem90 = true;
-                            dt_base = 6;
-                            if (randReal(0, 1) < 0.5)
-                                nCiclista90 = c->prox->num;
-                            else
-                                nCiclista90 = c->prox->prox->num;
-                        }
-                    }
-                    else if (nCiclistasAtivos == 0) { // Fim da prova
+                    if (nCiclistasAtivos == 0) { // Fim da prova
                         ajustaPrimeiroColocado(rankFinal, vencedor);
                         pthread_exit(0);
                     }
@@ -104,10 +91,16 @@ void * juiz(void * arg)
                 }
                 ciclistaQuebrou = false;
             }
-            if (tem90)
-                tempo += 20;
-            else
-                tempo += 60;
+            if (!ultimasVoltas && maiorVolta >= nVoltasTotal - 2) { // Sorteio de 90km/h
+                ultimasVoltas = true;
+                if (randReal(0, 1) < PROB_90) {
+                    tem90 = true;
+                    dt_base = 6;
+                    if (randReal(0, 1) < 0.5) nCiclista90 = primeiroColocado(L, maiorVolta);
+                }
+            }
+            if (tem90) tempo += 20;
+            else tempo += 60;
             usleep(10000);
             if (DEBUG) printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             if (DEBUG) fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
@@ -232,6 +225,7 @@ void eliminaQuebra(ciclista *c) {
             nanosleep(&ts, NULL); // dorme para esperar a thread parar (o loop de espera da thread dá uma leitura inválida no valgrind por causa do free)
             free(q);
             nQuebras++;
+            nVoltasTotal -= 2; // uma quebra diminui em 2 o número total de voltas da corrida
         }
         else
         anterior = p;

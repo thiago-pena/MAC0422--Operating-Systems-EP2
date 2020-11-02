@@ -23,10 +23,10 @@ ciclista ***pista;
 ciclista *cab;
 int d, n;
 _Atomic int nCiclistasAtivos, nEliminados, nQuebras;
-int nVoltasTotal = -1;
-bool ultimasVoltas = false;
-_Atomic bool tem90 = false;
-int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
+int nVoltasTotal;
+bool ultimasVoltas;
+bool tem90;
+int nCiclista90 = -1; // Número do ciclista que vai pedalar a 90km/h
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
 pthread_mutex_t mutex;
@@ -46,6 +46,9 @@ int main(int argc, char const *argv[]) {
     n = atoi(argv[2]);
     nCiclistasAtivos = n;
     nEliminados = nQuebras = 0;
+    nVoltasTotal = 2*n - 2;
+    ultimasVoltas = false;
+    tem90 = false;
     if (n <= 2) ultimasVoltas = true;
     pthread_mutex_init(&mutex, NULL);
 
@@ -96,6 +99,7 @@ int main(int argc, char const *argv[]) {
             novoCiclista->quebrou = false;
             novoCiclista->linhaDeChegada = false;
             novoCiclista->eliminar = false;
+            novoCiclista->vel90 = false;
             novoCiclista->prox = cab->prox;
             cab->prox = novoCiclista;
         }
@@ -117,6 +121,7 @@ int main(int argc, char const *argv[]) {
         novoCiclista->quebrou = false;
         novoCiclista->linhaDeChegada = false;
         novoCiclista->eliminar = false;
+        novoCiclista->vel90 = false;
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }

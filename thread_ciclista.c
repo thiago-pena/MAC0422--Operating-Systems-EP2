@@ -11,8 +11,9 @@ extern ciclista ***pista;
 extern ciclista *cab;
 extern int d, n;
 extern _Atomic int nCiclistasAtivos;
-extern _Atomic bool tem90;
-extern int nCiclista90; // número do ciclista que terá 90km/h, se ocorrer
+extern bool tem90;
+extern int nVoltasTotal;
+extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t **mutex2;
@@ -101,15 +102,17 @@ void * competidor(void * arg)
 void velocidade(ciclista *p)
 {
     double prob = randReal(0, 1);
-    if (DEBUG) fprintf(stderr, "Função velocidade (prob: %lf)\n", prob);
-    if (tem90 && nCiclista90 == p->num)
-        p->velocidade = 3;
-    if (p->voltas < 1) p->velocidade = 1; // velocidade na primeira volta é 30km/h
+    if (tem90) {
+        if (nCiclista90 == p->num) // primeiro colocado
+            p->velocidade = 3;
+        else if (p->voltas >= nVoltasTotal) // segundo colocado
+            p->velocidade = 3;
+    }
+    else if (p->voltas < 1) p->velocidade = 1;
     else if (p->velocidade == 1 && prob < 0.8)
         p->velocidade = 2;
     else if (p->velocidade == 2 && prob < 0.4)
         p->velocidade = 1;
-
 }
 
 // anda pra frente

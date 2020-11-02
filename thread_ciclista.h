@@ -26,6 +26,7 @@ struct Ciclista {
     bool quebrou;
     bool linhaDeChegada;
     bool eliminar; // o ciclista deve ser eliminado assim que passar pela linha de chegada
+    bool vel90; // marca o ciclista para ter 90km/h nas 2 últimas voltas
 };
 
 
