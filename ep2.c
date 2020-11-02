@@ -14,7 +14,7 @@
 
 #define TRUE 1
 #define DEBUG 1
-#define SEED 2
+#define SEED 3
 
 
 /* Variáveis globais */
@@ -26,6 +26,7 @@ int nVoltasTotal;
 bool ultimasVoltas;
 bool tem90;
 int nCiclista90 = -1; // Número do ciclista que vai pedalar a 90km/h
+bool esperandoSegundoUltimasVoltas = false;
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
 pthread_mutex_t mutex;

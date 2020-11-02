@@ -5,7 +5,7 @@
 #define DEBUG2 0
 #define DEBUG3 0
 #define DEBUG4 1
-#define DEBUGVOLTAS 0
+#define DEBUGVOLTAS 1
 #define DEBUGVIEW 1
 #define DEBUGMUTEX 0
 #define PROB_90 0.9999 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
@@ -19,6 +19,7 @@ extern _Atomic int nCiclistasAtivos, nEliminados, nQuebras;
 extern int nVoltasTotal;
 extern bool tem90;
 extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
+extern bool esperandoSegundoUltimasVoltas;
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t **mutex2;
@@ -40,6 +41,7 @@ void * juiz(void * arg)
     int maiorVolta = 0; // Maior volta local do coordenador
     bool vencedorTerminouProva = false;
     int vencedor = -1;
+    int primeiroUltimasVoltas = -1;
 
     while (true) {
         for (ciclista * p = c->prox; p != cab; p = p->prox) {
@@ -56,7 +58,7 @@ void * juiz(void * arg)
                 if (minVolta > p->voltas) minVolta = p->voltas;
             }
             if (maiorVolta != maxVolta) maiorVolta = maxVolta;
-            if (DEBUGVOLTAS) printf("(imprimeVoltasCiclistas) Voltas dos ciclistas ativos, nCiclistasAtivos: %d\n", nCiclistasAtivos);
+            if (DEBUGVOLTAS) printf("(imprimeVoltasCiclistas) Voltas dos ciclistas ativos, nCiclistasAtivos: %d, nQuebras: %d, n - 2 -2*nQuebras: %d, nVoltasTotal: %d\n", nCiclistasAtivos, nQuebras, 2*n - 2 -2*nQuebras, nVoltasTotal);
             if (DEBUGVOLTAS) imprimeVoltasCiclistas(c);
             if (DEBUG3 && maiorVolta > 0) imprimeVoltasListaRank(L);
 
@@ -87,18 +89,28 @@ void * juiz(void * arg)
                 }
                 ciclistaQuebrou = false;
             }
-            if (!ultimasVoltas && maiorVolta >= nVoltasTotal - 2) { // Sorteio de 90km/h
+            if (!ultimasVoltas && maiorVolta >= nVoltasTotal - 3) { // Sorteio de 90km/h
                 printf("SORTEIO TEM90\n");
                 ultimasVoltas = true;
                 if (randReal(0, 1) < PROB_90) {
                     tem90 = true;
                     dt_base = 6;
+                    primeiroUltimasVoltas = primeiroColocado(L, maiorVolta);
                     if (randReal(0, 1) < 0.5) {
-                        nCiclista90 = primeiroColocado(L, maiorVolta);
+                        nCiclista90 = primeiroUltimasVoltas;
                         printf("\t(sorteio tem 90) Primeiro colocado sorteado (nCiclista90: %d)\n", nCiclista90);
                     }
                     else {
+                        esperandoSegundoUltimasVoltas = true;
                         printf("\t(sorteio tem 90) Segundo colocado sorteado (nCiclista90: %d)\n", nCiclista90);
+                    }
+                }
+            }
+            if (esperandoSegundoUltimasVoltas) {
+                for (ciclista * p = c->prox; p != cab; p = p->prox) {
+                    if (p->num != primeiroUltimasVoltas && p->voltas >= nVoltasTotal - 3) {
+                        nCiclista90 = p->num;
+                        esperandoSegundoUltimasVoltas = false;
                     }
                 }
             }

@@ -15,7 +15,8 @@ extern _Atomic int nCiclistasAtivos;
 extern bool tem90;
 extern int nVoltasTotal;
 extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
-extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
+extern bool esperandoSegundoUltimasVoltas;
+extern int dt_base; // base do delta de velocidade (2 padrão, 6 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
 extern pthread_mutex_t **mutex2;
 extern _Atomic long long int tempo;
@@ -34,12 +35,11 @@ void * competidor(void * arg)
     ciclista *p = (ciclista *) arg;
 
     velocidade(p);
-    p->dt = dt_base - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
+    p->dt = dt_base - p->velocidade;
     while (true) {
         if (true) { // código da tarefa i
             p->linhaDeChegada = false;
             p->roundFeito = false;
-            // if (p->dt > 0) // A velocidade do ciclista requer mais de uma iteração para avançar
             p->dt = p->dt - p->velocidade;
             if (p->dt <= 0) { // A velocidade permite o ciclista avançar a cada iteração
                 // pthread_mutex_lock(&mutex);
@@ -95,21 +95,15 @@ void * competidor(void * arg)
 }
 
 /* Calcula probabilidade e muda velocidade */
-void velocidade(ciclista *p)
-{
+void velocidade(ciclista *p) {
     double prob = randReal(0, 1);
-    if (tem90) {
-        if (nCiclista90 == p->num)  {
+    if (tem90 && !esperandoSegundoUltimasVoltas)
+        if (nCiclista90 == p->num) {
             p->velocidade = 3;
-            printf("1o colocado comecou a pedalar a 90km/h (ciclista: %d, nCiclista90: %d)\n", p->num, nCiclista90);
-        }// primeiro colocado
-        else if (p->voltas >= nVoltasTotal - 2) // segundo colocado
-        {
-            p->velocidade = 3;
-            printf("2o colocado comecou a pedalar a 90km/h (ciclista: %d, nCiclista90: %d)\n", p->num, nCiclista90);
+            printf("Ciclista %d comecou a pedalar a 90km/h (ciclista: %d, nCiclista90: %d)\n", p->num, p->num, nCiclista90);
+            return;
         }
-    }
-    else if (p->voltas < 1) p->velocidade = 1;
+    if (p->voltas < 1) p->velocidade = 1;
     else if (p->velocidade == 1 && prob < 0.8)
         p->velocidade = 2;
     else if (p->velocidade == 2 && prob < 0.4)
@@ -213,10 +207,7 @@ void tratalinhaDechegada(ciclista *p) {
             if (DEBUG) fprintf(stderr, "Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
         }
     }
-    if (!quebrou) { // não quebrou
-        // if (DEBUG) fprintf(stderr, "Ciclista: %d (x = 0), volta: %d\n", p->num, p->voltas);
-        // printf(">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
-        // fprintf(stderr, ">.... insere ciclista %d, volta: %d\n", p->num, p->voltas);
+    if (!quebrou) {
         InsereCiclista(L, n, p->voltas, p->num, tempo);
         velocidade(p);
         // @@@ preciso registrar no ranqueamento com um mutex?
