@@ -3,6 +3,7 @@
 
 #define DEBUG 1
 #define DEBUG2 1
+#define DEBUGMUTEX 0
 #define NSLEEP 100 // 0.1s = 1E-1
 #define PROB_QUEBRA 0.05 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
 
@@ -32,10 +33,6 @@ void * competidor(void * arg)
 
     ciclista *p = (ciclista *) arg;
 
-    if (DEBUG) {
-        printf("Ciclista: %d pronto\n", p->num );
-        fprintf(stderr, "Ciclista: %d pronto\n", p->num);
-    }
     velocidade(p); // Velocidade inicial na primeira volta (30km/h)
     p->dt = dt_base - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
     while (true) {
@@ -57,10 +54,10 @@ void * competidor(void * arg)
                 int contTentativas = 0;
                 while (contTentativas++ < 3) {
                     if (pthread_mutex_trylock(&mutex2[p->py][(p->px + 1)%d]) == 0) {
-                        fprintf(stderr, "LOCK1   (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
+                        if (DEBUGMUTEX) fprintf(stderr, "LOCK1   (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
                         if (pista[p->py][(p->px + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
                             moveFrente(p);
-                            fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, p->px, p->num, p->voltas);
+                            if (DEBUGMUTEX) fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, p->px, p->num, p->voltas);
                             pthread_mutex_unlock(&mutex2[p->py][p->px]);
                             avancou = true;
                             break;
@@ -70,12 +67,12 @@ void * competidor(void * arg)
                         nanosleep(&ts, NULL);
                 }
                 if (!avancou) {// Caso 1: a posição da frente está ocupada
-                    fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
+                    if (DEBUGMUTEX) fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
                     pthread_mutex_unlock(&mutex2[p->py][(p->px + 1)%d]);
                     moveTemp(p);
                 }
                 if (p->voltas >= 4) {
-                    fprintf(stderr, "[DEBUG erro] ciclista: %d, p->voltas: %d, p->px: %d\n", p->num, p->voltas, p->px);
+                    if (DEBUGMUTEX) fprintf(stderr, "[DEBUG erro] ciclista: %d, p->voltas: %d, p->px: %d\n", p->num, p->voltas, p->px);
                 }
                 if (p->px == 0)// Verifica se completou uma volta para alterar a velocidade
                     tratalinhaDechegada(p);
@@ -132,39 +129,39 @@ void moveTemp(ciclista *p) {
     bool achouEspacoFrente = false; // Tem espaço na pista da frente?
     for (i = p->py + 1; i < 10; i++) { // Procura se há pista externa livre
         pthread_mutex_lock(&mutex2[i][p->px]);
-        fprintf(stderr, "LOCK2i   (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
+        if (DEBUGMUTEX) fprintf(stderr, "LOCK2i   (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
         if (pista[i][p->px] == NULL) {
             achouPistaExt = true;
             break;
         }
-        fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
+        if (DEBUGMUTEX) fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
         pthread_mutex_unlock(&mutex2[i][p->px]);
     }
 
     if (achouPistaExt) {
-        fprintf(stderr, "ciclista %d, volta: %d || (%d, %d)->(%d, %d)\n", p->num, p->voltas, p->py, p->px, i, p->px);
+        if (DEBUGMUTEX) fprintf(stderr, "ciclista %d, volta: %d || (%d, %d)->(%d, %d)\n", p->num, p->voltas, p->py, p->px, i, p->px);
         pista[i][p->px] = p;
         pista[p->py][p->px] = NULL;
         p->py = i;
-        fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
+        if (DEBUGMUTEX) fprintf(stderr, "UNLOCK2i (%d, %d) ciclista %d, volta: %d\n", i, p->px, p->num, p->voltas);
         pthread_mutex_unlock(&mutex2[i][p->px]);
     }
     if (achouPistaExt) {
         for (j = 0; j < 10; j++) { // Procura se há espaço na linha da frente
             pthread_mutex_lock(&mutex2[j][(p->px+1)%d]);
-            fprintf(stderr, "LOCK2j   (%d, %d) ciclista %d, volta: %d\n", j, (p->px+1)%d, p->num, p->voltas);
+            if (DEBUGMUTEX) fprintf(stderr, "LOCK2j   (%d, %d) ciclista %d, volta: %d\n", j, (p->px+1)%d, p->num, p->voltas);
             if (pista[j][(p->px+1)%d] == NULL) {
-                fprintf(stderr, "ciclista %d, volta: %d || (%d, %d)->(%d, %d)\n", p->num, p->voltas, p->py, p->px, j, (p->px+1)%d);
+                if (DEBUGMUTEX) fprintf(stderr, "ciclista %d, volta: %d || (%d, %d)->(%d, %d)\n", p->num, p->voltas, p->py, p->px, j, (p->px+1)%d);
                 achouEspacoFrente = true;
                 pista[j][(p->px+1)%d] = p;
                 pista[p->py][p->px] = NULL;
                 p->px = (p->px+1)%d;
                 p->py = j;
-                fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d, volta: %d\n", j, p->px, p->num, p->voltas);
+                if (DEBUGMUTEX) fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d, volta: %d\n", j, p->px, p->num, p->voltas);
                 pthread_mutex_unlock(&mutex2[j][p->px]);
                 break;
             }
-            fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d, volta: %d\n", j, (p->px+1)%d, p->num, p->voltas);
+            if (DEBUGMUTEX) fprintf(stderr, "UNLOCK2j (%d, %d) ciclista %d, volta: %d\n", j, (p->px+1)%d, p->num, p->voltas);
             pthread_mutex_unlock(&mutex2[j][(p->px+1)%d]);
         }
     }
@@ -208,7 +205,8 @@ void tratalinhaDechegada(ciclista *p) {
             nCiclistasAtivos--;
             p->quebrou = true;
             quebrou = true;
-            fprintf(stderr, "Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
+            if (DEBUG) printf("Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
+            if (DEBUG) fprintf(stderr, "Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
         }
     }
     if (!quebrou) { // não quebrou

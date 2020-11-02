@@ -12,7 +12,6 @@
 #include "thread_coordenador.h"
 #include "rank.h"
 
-
 #define TRUE 1
 #define DEBUG 1
 #define SEED 2
@@ -125,20 +124,14 @@ int main(int argc, char const *argv[]) {
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }
-    if (DEBUG) {
-        for (ciclista * p = cab->prox; p != cab; p = p->prox) {
-          printf("Ciclista %d vai competir\n",p->num);
-        }
-    }
     visualizador();
-    sleep(4);
+    sleep(2);
     /*Cria thread coordenadora de threads*/
     pthread_t coord;
     if (pthread_create(&coord, NULL, juiz, (void*) cab)) {
         printf("\n ERROR creating thread juiz\n");
         exit(1);
     }
-    printf("foi criação do juiz\n");
     for (ciclista * p = cab->prox; p != cab; p = p->prox) {
       if (pthread_create(&p->id, NULL, competidor, (void*) p)) {
           printf("\n ERROR creating thread %ld\n",p->id);
