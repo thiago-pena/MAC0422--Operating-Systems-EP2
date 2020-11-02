@@ -89,11 +89,11 @@ void * juiz(void * arg)
                         ultimasVoltas = true;
                         if (randReal(0, 1) < PROB_90) {
                             tem90 = true;
-                            dt_base = 3;
-                            if (randReal(0, 1) < 0.5) // 50% de chances de ser o 1º
-                            nCiclista90 = c->prox->num;
+                            dt_base = 6;
+                            if (randReal(0, 1) < 0.5)
+                                nCiclista90 = c->prox->num;
                             else
-                            nCiclista90 = c->prox->prox->num; // será o 2º
+                                nCiclista90 = c->prox->prox->num;
                         }
                     }
                     else if (nCiclistasAtivos == 0) { // Fim da prova
