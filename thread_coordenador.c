@@ -47,7 +47,7 @@ void * juiz(void * arg)
 
         if (true) { // if temporário (código da thread coordenadora)
             if (ciclistaQuebrou) // elimina todos os ciclistas que quebraram (se quebrou, está na linha de chegada)
-            eliminaQuebra(c);
+                eliminaQuebra(c);
             minVolta = maxVolta;
             for (ciclista * p = c->prox; p != cab; p = p->prox) {
                 if (maxVolta < p->voltas) maxVolta = p->voltas;

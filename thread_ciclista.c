@@ -102,7 +102,7 @@ void velocidade(ciclista *p)
     if (tem90) {
         if (nCiclista90 == p->num) // primeiro colocado
             p->velocidade = 3;
-        else if (p->voltas >= nVoltasTotal) // segundo colocado
+        else if (p->voltas >= nVoltasTotal - 2) // segundo colocado
             p->velocidade = 3;
     }
     else if (p->voltas < 1) p->velocidade = 1;

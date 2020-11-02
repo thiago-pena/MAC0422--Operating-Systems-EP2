@@ -21,4 +21,4 @@ tools.o: tools.c tools.h
 	$(CC) $(CFLAGS) -c tools.c
 
 clean:
-	$(RM) *.o *~ ep2
+	$(RM) *.o ep2
