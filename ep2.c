@@ -22,7 +22,8 @@
 ciclista ***pista;
 ciclista *cab;
 int d, n;
-_Atomic int nCiclistasAtivos;
+_Atomic int nCiclistasAtivos, nEliminados, nQuebras;
+int nVoltasTotal = -1;
 bool ultimasVoltas = false;
 _Atomic bool tem90 = false;
 int nCiclista90 = -1; // número do ciclista que terá 90km/h, se ocorrer
@@ -44,6 +45,7 @@ int main(int argc, char const *argv[]) {
     d = atoi(argv[1]);
     n = atoi(argv[2]);
     nCiclistasAtivos = n;
+    nEliminados = nQuebras = 0;
     if (n <= 2) ultimasVoltas = true;
     pthread_mutex_init(&mutex, NULL);
 

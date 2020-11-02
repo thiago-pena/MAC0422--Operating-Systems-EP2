@@ -6,5 +6,6 @@
 
 int randInteger( int a, int b);
 double randReal( double a, double b);
+void trocaInt(int *a, int *b);
 
 #endif

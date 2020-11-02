@@ -216,6 +216,33 @@ int novoUltimoColocado(ListaRank L, int volta, int numCiclista) {
     return ultimoColocado(L, volta);
 }
 
+// Recebe um rank e o número do ciclista vencedor. A função ajusta as posições
+// do rank final para que o vencedor seja o primeiro colocado, pois sua thread
+// foi a primeira a ser destruída na última volta.
+void ajustaPrimeiroColocado(Rank R, int vencedor) {
+    int i = 0;
+    while (i < R->n && R->nCiclista[i] != vencedor)
+        i++;
+    if (i >= R->n) {
+        printf("ERRO! vencedor nao encontrado na função ajustaPrimeiroColocado.\n");
+        exit(1);
+    }
+    for ( ; i + 1 < R->n; i++) {
+        trocaInt(&(R->nCiclista[i]), &(R->nCiclista[i + 1]));
+        trocaInt(&(R->t[i]), &(R->t[i + 1]));
+    }
+}
+
+// Recebe uma lista de ranks por volta e retorna o primeiro colocado dessa volta.
+int primeiroColocado(ListaRank L, int volta) {
+    Rank R = BuscaRank(L, volta);
+    if (R == NULL) {
+        printf("ERRO! Volta não encontrada na função ultimoColocado. (volta %d)\n", volta);
+        exit(1);
+    }
+    return R->nCiclista[0];
+}
+
 // Para debug
 void imprimeVoltasListaRank(ListaRank L) {
     fprintf(stderr, "Voltas em listaRank: ");

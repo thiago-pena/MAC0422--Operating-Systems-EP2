@@ -3,7 +3,7 @@
 
 #define DEBUG 1
 #define DEBUG2 1
-#define NSLEEP 100000000 // 0.1s = 1E-1
+#define NSLEEP 100 // 0.1s = 1E-1
 #define PROB_QUEBRA 0.05 // @alterar para 0.05 -> probabilidade de um ciclista quebrar ao completar uma volta
 
 // Variáveis globais
@@ -47,15 +47,27 @@ void * competidor(void * arg)
             else { // A velocidade permite o ciclista avançar a cada iteração
                 // pthread_mutex_lock(&mutex);
                 bool avancou = false;
-                pthread_mutex_lock(&mutex2[p->py][(p->px + 1)%d]);
-                fprintf(stderr, "LOCK1   (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
-                if (pista[p->py][(p->px + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
-                    moveFrente(p);
-                    fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, p->px, p->num, p->voltas);
-                    pthread_mutex_unlock(&mutex2[p->py][p->px]);
-                    avancou = true;
-                }
 
+                // if (pthread_mutex_trylock(&mutex2[j][i]) == 0)
+                //     pthread_mutex_unlock(&mutex2[j][i]);
+                // else
+                //     fprintf(stderr, "\tmutex (%d, %d) locked\n", j, i);
+
+                int contTentativas = 0;
+                while (contTentativas++ < 3) {
+                    if (pthread_mutex_trylock(&mutex2[p->py][(p->px + 1)%d]) == 0) {
+                        fprintf(stderr, "LOCK1   (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
+                        if (pista[p->py][(p->px + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
+                            moveFrente(p);
+                            fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, p->px, p->num, p->voltas);
+                            pthread_mutex_unlock(&mutex2[p->py][p->px]);
+                            avancou = true;
+                            break;
+                        }
+                    }
+                    else
+                        nanosleep(&ts, NULL);
+                }
                 if (!avancou) {// Caso 1: a posição da frente está ocupada
                     fprintf(stderr, "UNLOCK1 (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
                     pthread_mutex_unlock(&mutex2[p->py][(p->px + 1)%d]);

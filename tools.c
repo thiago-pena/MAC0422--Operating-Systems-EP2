@@ -26,3 +26,9 @@ double randReal( double a, double b) {
     // 0 <= d < 1
     return a + d * (b - a);
 }
+
+void trocaInt(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}

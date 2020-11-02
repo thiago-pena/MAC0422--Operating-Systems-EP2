@@ -12,8 +12,8 @@ typedef struct celRank {
     int volta;      // Número da volta
     int n;          // Número de ciclistas ativos nessa volta
     int *nCiclista; // Vetor de números dos ciclistas ordenados por posição naquela volta
-    int *t;         // Para o ciclista de índice i em rank[], informa o tempo em que ele cruzou a linha de chegada nessa volta
     int size;       // Tamanho dos vetores alocados
+    int *t;         // Para o ciclista de índice i em rank[], informa o tempo em que ele cruzou a linha de chegada nessa volta
 } celRank;
 typedef celRank *Rank;
 
@@ -76,6 +76,14 @@ int ultimoColocado(ListaRank L, int volta);
 // Recebe uma lista de ranks por volta, uma volta e um número de ciclista.
 // A função remove o ciclista do rank dessa volta e retorna um novo último colocado
 int novoUltimoColocado(ListaRank L, int volta, int numCiclista);
+
+// Recebe um rank e o número do ciclista vencedor. A função ajusta as posições
+// do rank final para que o vencedor seja o primeiro colocado, pois sua thread
+// foi a primeira a ser destruída na última volta.
+void ajustaPrimeiroColocado(Rank R, int vencedor);
+
+// Recebe uma lista de ranks por volta e retorna o primeiro colocado dessa volta.
+int primeiroColocado(ListaRank L, int volta);
 
 // Para debug
 void imprimeVoltasListaRank(ListaRank L);
