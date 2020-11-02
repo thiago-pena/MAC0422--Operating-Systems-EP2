@@ -4,9 +4,11 @@
 #define DEBUG 1
 #define DEBUG2 0
 #define DEBUG3 0
+#define DEBUG4 1
+#define DEBUGVOLTAS 0
 #define DEBUGVIEW 1
 #define DEBUGMUTEX 0
-#define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
+#define PROB_90 0.9999 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
 #define NSLEEP 100000 // 0.01s = 1E-2 = 10ms
 
 // Variáveis globais
@@ -54,8 +56,8 @@ void * juiz(void * arg)
                 if (minVolta > p->voltas) minVolta = p->voltas;
             }
             if (maiorVolta != maxVolta) maiorVolta = maxVolta;
-            if (DEBUG2) fprintf(stderr, "\t\t\t(Coordenador teste) Voltas dos ciclistas ativos, nCiclistasAtivos: %d\n", nCiclistasAtivos);
-            if (DEBUG2) imprimeVoltasCiclistas(c);
+            if (DEBUGVOLTAS) printf("(imprimeVoltasCiclistas) Voltas dos ciclistas ativos, nCiclistasAtivos: %d\n", nCiclistasAtivos);
+            if (DEBUGVOLTAS) imprimeVoltasCiclistas(c);
             if (DEBUG3 && maiorVolta > 0) imprimeVoltasListaRank(L);
 
             if(!vencedorTerminouProva && maiorVolta >= nVoltasTotal) { // Vencedor terminou a prova (usei >= pois pode haver um ciclista muito rápido que esteja muitas voltas à frente, antes de sabermos nVoltasTotal com absoluta certeza)
@@ -86,11 +88,18 @@ void * juiz(void * arg)
                 ciclistaQuebrou = false;
             }
             if (!ultimasVoltas && maiorVolta >= nVoltasTotal - 2) { // Sorteio de 90km/h
+                printf("SORTEIO TEM90\n");
                 ultimasVoltas = true;
                 if (randReal(0, 1) < PROB_90) {
                     tem90 = true;
                     dt_base = 6;
-                    if (randReal(0, 1) < 0.5) nCiclista90 = primeiroColocado(L, maiorVolta);
+                    if (randReal(0, 1) < 0.5) {
+                        nCiclista90 = primeiroColocado(L, maiorVolta);
+                        printf("\t(sorteio tem 90) Primeiro colocado sorteado (nCiclista90: %d)\n", nCiclista90);
+                    }
+                    else {
+                        printf("\t(sorteio tem 90) Segundo colocado sorteado (nCiclista90: %d)\n", nCiclista90);
+                    }
                 }
             }
             if (tem90) tempo += 20;
@@ -98,6 +107,7 @@ void * juiz(void * arg)
             usleep(10000);
             if (DEBUG2) printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             if (DEBUG2) fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
+            if (DEBUGVIEW) printf("dt_base: %d\n", dt_base);
             if (DEBUGVIEW) visualizador();
             if (DEBUG2) visualizadorStderr();
             if (ultimaVoltaDeEliminacao > 0) {
@@ -216,11 +226,9 @@ void eliminaQuebra(ciclista *c) {
 
 // para Debug apenas (remover)
 void imprimeVoltasCiclistas(ciclista *c) {
-    if (DEBUG2) fprintf(stderr, "[DEBUG] voltas de cada ciclista\n");
+    printf("[DEBUG] voltas de cada ciclista\n");
     for (ciclista * p = c->prox; p != cab; p = p->prox) {
-        if (DEBUG2) {
-            fprintf(stderr, "\tciclista %d, volta: %d\n", p->num, p->voltas);
-        }
+        printf("\tciclista %d, volta: %d\n", p->num, p->voltas);
     }
 }
 

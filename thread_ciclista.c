@@ -33,16 +33,15 @@ void * competidor(void * arg)
 
     ciclista *p = (ciclista *) arg;
 
-    velocidade(p); // Velocidade inicial na primeira volta (30km/h)
+    velocidade(p);
     p->dt = dt_base - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
     while (true) {
         if (true) { // código da tarefa i
             p->linhaDeChegada = false;
             p->roundFeito = false;
-            if (p->dt > 0) { // A velocidade do ciclista requer mais de uma iteração para avançar
-                (p->dt)--;
-            }
-            else { // A velocidade permite o ciclista avançar a cada iteração
+            // if (p->dt > 0) // A velocidade do ciclista requer mais de uma iteração para avançar
+            p->dt = p->dt - p->velocidade;
+            if (p->dt <= 0) { // A velocidade permite o ciclista avançar a cada iteração
                 // pthread_mutex_lock(&mutex);
                 bool avancou = false;
 
@@ -76,7 +75,7 @@ void * competidor(void * arg)
                 }
                 if (p->px == 0)// Verifica se completou uma volta para alterar a velocidade
                     tratalinhaDechegada(p);
-                p->dt = dt_base - p->velocidade; // atualiza dt para a pŕoxima iteração (para as 2 últimas voltas, devemos fazer "3 - p->velocidade")
+                p->dt = dt_base; // atualiza dt para a pŕoxima iteração
                 // movePistaInterna(p);
                 // pthread_mutex_unlock(&mutex);
             }
@@ -100,10 +99,15 @@ void velocidade(ciclista *p)
 {
     double prob = randReal(0, 1);
     if (tem90) {
-        if (nCiclista90 == p->num) // primeiro colocado
+        if (nCiclista90 == p->num)  {
             p->velocidade = 3;
+            printf("1o colocado comecou a pedalar a 90km/h (ciclista: %d, nCiclista90: %d)\n", p->num, nCiclista90);
+        }// primeiro colocado
         else if (p->voltas >= nVoltasTotal - 2) // segundo colocado
+        {
             p->velocidade = 3;
+            printf("2o colocado comecou a pedalar a 90km/h (ciclista: %d, nCiclista90: %d)\n", p->num, nCiclista90);
+        }
     }
     else if (p->voltas < 1) p->velocidade = 1;
     else if (p->velocidade == 1 && prob < 0.8)
