@@ -17,7 +17,7 @@
 #include "rank.h"
 
 #define TRUE 1
-#define DEBUG 1
+#define DEBUG 0
 #define SEED 3
 
 
