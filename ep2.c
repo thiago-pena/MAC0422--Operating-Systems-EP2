@@ -46,13 +46,18 @@ long memTotal;
 
 void destroiPista();
 double elapsedTime(struct timeval a,struct timeval b);
+double elapsedTime2(struct timespec a,struct timespec b);
 
 int main(int argc, char const *argv[]) {
+
+    /*Inicializa o tempo real*/
+    struct timespec  iniR, endR;
 
     // Caso flag benchmark captura informações de tempo e memória
     struct rusage usage;
     struct timeval ini, end, iniS, endS;
     if (argc > 3 && !strcmp("-benchmark",argv[3])) {
+      clock_gettime(CLOCK_REALTIME, &iniR);
       getrusage(RUSAGE_SELF, &usage);
       ini = usage.ru_utime;
       iniS = usage.ru_stime;
@@ -185,6 +190,7 @@ int main(int argc, char const *argv[]) {
     free(cab);
     //Grava no final informações de benchmark em arquivo .txt
     if (argc > 3 && !strcmp("-benchmark",argv[3])) {
+      clock_gettime(CLOCK_REALTIME, &endR);
       getrusage(RUSAGE_SELF, &usage);
       memTotal += usage.ru_maxrss;
       printf("Uso de memória: %ld kilobytes\n", memTotal);
@@ -194,7 +200,7 @@ int main(int argc, char const *argv[]) {
       fp = fopen ("benchmark.txt","a");
       if (fp!=NULL)
       {
-        fprintf(fp,"%02d %1.3lf %1.3lf %ld\n",atoi(argv[4]),elapsedTime(ini, end), elapsedTime(iniS, endS), memTotal);
+        fprintf(fp,"%02d %1.3lf %1.3lf %1.3lf %ld\n",atoi(argv[4]),elapsedTime2(iniR, endR),elapsedTime(ini, end), elapsedTime(iniS, endS), memTotal);
         fclose (fp);
       }
     }
@@ -215,5 +221,13 @@ double elapsedTime(struct timeval a,struct timeval b)
     long seconds = b.tv_sec - a.tv_sec;
     long microseconds = b.tv_usec - a.tv_usec;
     double elapsed = seconds + (double)microseconds/1000000;
+    return elapsed;
+}
+
+double elapsedTime2(struct timespec a,struct timespec b)
+{
+    long seconds = b.tv_sec - a.tv_sec;
+    long nanoseconds = b.tv_nsec - a.tv_nsec;
+    double elapsed = seconds + (double)nanoseconds/1000000000;
     return elapsed;
 }
