@@ -145,7 +145,6 @@ int main(int argc, char const *argv[]) {
         cab->prox = novoCiclista;
     }
     //visualizador();
-    sleep(2);
     /*Cria thread coordenadora de threads*/
     pthread_t coord;
     if (pthread_create(&coord, NULL, juiz, (void*) cab)) {

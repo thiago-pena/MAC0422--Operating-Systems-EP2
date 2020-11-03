@@ -8,8 +8,8 @@
 #define DEBUGVOLTAS 0
 #define DEBUGVIEW 0
 #define DEBUGMUTEX 0
-#define PROB_90 0.9999 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
-#define NSLEEP 100000 // 0.01s = 1E-2 = 10ms
+#define PROB_90 0.1 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
+#define NSLEEP 100 // 0.1s = 1E-1
 
 // Variáveis globais
 extern ciclista ***pista;
@@ -35,6 +35,10 @@ extern long memTotal;
 
 void * juiz(void * arg)
 {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = NSLEEP;
+
     //Lê informações de memória e tempo
     struct rusage usage;
     getrusage(RUSAGE_THREAD, &usage);
@@ -51,10 +55,10 @@ void * juiz(void * arg)
     int primeiroUltimasVoltas = -1;
 
     while (true) {
-        printf("loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
-        fprintf(stderr, "loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
+        // printf("loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
+        // fprintf(stderr, "loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
         for (ciclista * p = c->prox; p != cab; p = p->prox) {
-            while (p->arrive == 0) usleep(1);
+            while (p->arrive == 0) nanosleep(&ts, NULL);
             p->arrive = 0;
         }
 
@@ -130,7 +134,7 @@ void * juiz(void * arg)
             }
             if (tem90) tempo += 20;
             else tempo += 60;
-            usleep(10000);
+            // nanosleep(&ts, NULL);
             if (DEBUG2) printf("(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             if (DEBUG2) fprintf(stderr, "(\\/)\nmaiorVolta: %d, minVolta: %d, ultimaVoltaDeEliminacao: %d\n", maiorVolta, minVolta, ultimaVoltaDeEliminacao);
             if (DEBUGVIEW) printf("dt_base: %d\n", dt_base);

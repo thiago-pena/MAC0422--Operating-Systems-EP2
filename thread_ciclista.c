@@ -46,8 +46,8 @@ void * competidor(void * arg)
     p->dt = dt_base - p->velocidade;
     while (true) {
         if (true) { // código da tarefa i
-            printf("loop ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
-            fprintf(stderr, "ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
+            // printf("loop ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
+            // fprintf(stderr, "ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
             p->linhaDeChegada = false;
             p->roundFeito = false;
             p->dt = p->dt - p->velocidade;
@@ -61,7 +61,7 @@ void * competidor(void * arg)
                 //     fprintf(stderr, "\tmutex (%d, %d) locked\n", j, i);
 
                 int contTentativas = 0;
-                while (contTentativas++ < 3) {
+                while (contTentativas++ < 2) {
                     if (pthread_mutex_trylock(&mutex2[p->py][(p->px + 1)%d]) == 0) {
                         if (DEBUGMUTEX) fprintf(stderr, "LOCK1   (%d, %d) ciclista %d, volta: %d\n", p->py, (p->px + 1)%d, p->num, p->voltas);
                         if (pista[p->py][(p->px + 1)%d] == NULL) { // Caso 0: a posição da frente está livre
@@ -90,7 +90,7 @@ void * competidor(void * arg)
                 // pthread_mutex_unlock(&mutex);
             }
             p->roundFeito = true;
-            nanosleep(&ts, NULL);
+            nanosleep(&ts, NULL); // para dar mais tempo para os outros andarem antes de tentar subir
             // pthread_mutex_lock(&mutex);
             movePistaInterna2(p);
             // pthread_mutex_unlock(&mutex);
@@ -98,7 +98,7 @@ void * competidor(void * arg)
 
         // Barreira de sincronização
         p->arrive = 1;
-        while (!p->Continue) usleep(1);
+        while (!p->Continue) nanosleep(&ts, NULL);
         p->Continue = 0;
     }
   return NULL;
