@@ -10,6 +10,8 @@
 #include <unistd.h>
     // sleep
 #include <stdbool.h>
+#include <string.h>
+    // strcmp
 #include "thread_ciclista.h"
 #include "thread_coordenador.h"
 #include "rank.h"
@@ -32,6 +34,7 @@ bool esperandoSegundoUltimasVoltas = false;
 int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
 pthread_mutex_t mutex;
+pthread_mutex_t mutexInsere;
 pthread_mutex_t **mutex2;
 int maiorVolta, menorVolta;
 _Atomic long long int tempo = 0; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
@@ -66,6 +69,7 @@ int main(int argc, char const *argv[]) {
     tem90 = false;
     if (n <= 2) ultimasVoltas = true;
     pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutexInsere, NULL);
 
     // Cria lista de Ranks por volta
     L = CriaListaRank();
@@ -140,7 +144,7 @@ int main(int argc, char const *argv[]) {
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }
-    visualizador();
+    //visualizador();
     sleep(2);
     /*Cria thread coordenadora de threads*/
     pthread_t coord;
@@ -174,6 +178,7 @@ int main(int argc, char const *argv[]) {
     printf("Fim do ep\n");
 
     pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&mutexInsere);
     destroiPista();
     DestroiListaRank(L);
     DestroiRank(rankFinal);

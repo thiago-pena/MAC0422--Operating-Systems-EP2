@@ -18,6 +18,7 @@ extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
 extern bool esperandoSegundoUltimasVoltas;
 extern int dt_base; // base do delta de velocidade (2 padrão, 6 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutexInsere;
 extern pthread_mutex_t **mutex2;
 extern _Atomic long long int tempo;
 extern ListaRank L;
@@ -45,6 +46,8 @@ void * competidor(void * arg)
     p->dt = dt_base - p->velocidade;
     while (true) {
         if (true) { // código da tarefa i
+            printf("loop ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
+            fprintf(stderr, "ciclista %d, volta: %d, x: %d, v: %d\n", p->num, p->voltas, p->px, p->velocidade);
             p->linhaDeChegada = false;
             p->roundFeito = false;
             p->dt = p->dt - p->velocidade;
@@ -215,7 +218,9 @@ void tratalinhaDechegada(ciclista *p) {
         }
     }
     if (!quebrou) {
+        pthread_mutex_lock(&mutexInsere);
         InsereCiclista(L, n, p->voltas, p->num, tempo);
+        pthread_mutex_unlock(&mutexInsere);
         velocidade(p);
         // @@@ preciso registrar no ranqueamento com um mutex?
     }

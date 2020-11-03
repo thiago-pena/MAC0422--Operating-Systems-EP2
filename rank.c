@@ -174,23 +174,23 @@ Rank BuscaRank(ListaRank L, int volta) {
     return R;
 }
 
+// Recebe uma rank e um ciclista e verifica se o ciclista está nesse rank
+int buscaQuebra(Rank R, int nCiclista) {
+    if (R == NULL) return 0;
+    for (int i = 0; i < R->n; i++)
+        if (R->nCiclista[i] == nCiclista) return 1;
+    return 0;
+}
 
 // Recebe uma lista de ranks por volta e retorna o último colocado ao término
 // dessa volta. Se houver mais de um último colocado, sorteia um deles
 int ultimoColocado(ListaRank L, int volta) {
-    int a, b;
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
         printf("ERRO! Volta não encontrada na função ultimoColocado. (volta %d)\n", volta);
         exit(1);
     }
-    a = b = R->n - 1; // último índice
-    while (a >= 0 && R->t[a] == R->t[b])
-        a--;
-    a++;
-    if (a == b) // só há um último colocado
-        return R->nCiclista[a];
-    return R->nCiclista[randInteger(a, b)];
+    return R->nCiclista[R->n-1];
 }
 
 // Recebe uma lista de ranks por volta, uma volta e um número de ciclista.
@@ -237,7 +237,7 @@ void ajustaPrimeiroColocado(Rank R, int vencedor) {
 int primeiroColocado(ListaRank L, int volta) {
     Rank R = BuscaRank(L, volta);
     if (R == NULL) {
-        printf("ERRO! Volta não encontrada na função ultimoColocado. (volta %d)\n", volta);
+        printf("ERRO! Volta não encontrada na função primeiroColocado. (volta %d)\n", volta);
         exit(1);
     }
     return R->nCiclista[0];

@@ -5,8 +5,8 @@
 #define DEBUG2 0
 #define DEBUG3 0
 #define DEBUG4 1
-#define DEBUGVOLTAS 1
-#define DEBUGVIEW 1
+#define DEBUGVOLTAS 0
+#define DEBUGVIEW 0
 #define DEBUGMUTEX 0
 #define PROB_90 0.9999 // @alterar para 0.1 -> probabilidade de um ciclista ter 90km/h nas últimas voltas
 #define NSLEEP 100000 // 0.01s = 1E-2 = 10ms
@@ -22,6 +22,7 @@ extern int nCiclista90; // Número do ciclista que vai pedalar a 90km/h
 extern bool esperandoSegundoUltimasVoltas;
 extern int dt_base; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h
 extern pthread_mutex_t mutex;
+extern pthread_mutex_t mutexInsere;
 extern pthread_mutex_t **mutex2;
 extern _Atomic long long int tempo;
 extern ListaRank L;
@@ -50,6 +51,8 @@ void * juiz(void * arg)
     int primeiroUltimasVoltas = -1;
 
     while (true) {
+        printf("loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
+        fprintf(stderr, "loop coord (nVoltasTotal: %d, nQquebras: %d, nCiclistasAtivos: %d)\n", nVoltasTotal, nQuebras, nCiclistasAtivos);
         for (ciclista * p = c->prox; p != cab; p = p->prox) {
             while (p->arrive == 0) usleep(1);
             p->arrive = 0;
@@ -75,22 +78,24 @@ void * juiz(void * arg)
                     nEliminados++;
                     if (DEBUG) fprintf(stderr, ">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", vencedor);
                     if (DEBUG) printf(">>>>>>>>>>>>> O ciclista %d foi o vencedor!\n", vencedor);
+                    printf("Teste --- ultimaVoltaDeEliminacao: %d, minVolta: %d\n", ultimaVoltaDeEliminacao, minVolta);
                     vencedorTerminouProva = true;
             }
             while (minVolta > 0 && ultimaVoltaDeEliminacao < minVolta) {
                 // imprimeRank(L, ultimaVoltaDeEliminacao);
-                imprimeStderrRank(L, ultimaVoltaDeEliminacao);
+                fprintf(stderr, "\nultimaVoltaDeEliminacao: %d\n", ultimaVoltaDeEliminacao);
+                if (nCiclistasAtivos > 1) imprimeStderrRank(L, ultimaVoltaDeEliminacao);
                 ultimaVoltaDeEliminacao++; // terminou uma volta
                 printf("ultimaVoltaDeEliminacao: %d\n", ultimaVoltaDeEliminacao);
                 if (ultimaVoltaDeEliminacao%2 == 0) { // Eliminação
                     int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao);
-                    if (DEBUG) printf(">>>> Ultimo colocado (Eliminado): %d\n", ultimo);
+                    fprintf(stderr, "Eliminação: %d\n", ultimo);
                     eliminaCiclista(c, ultimo);
                     nCiclistasAtivos--;
                     nEliminados++;
                     if (nCiclistasAtivos == 0) { // Fim da prova
                         ajustaPrimeiroColocado(rankFinal, vencedor);
-                        //Lê informações de memória e tempo antes do exit
+                        imprimeStderrRank(L, ultimaVoltaDeEliminacao);
                         getrusage(RUSAGE_THREAD, &usage);
                         memTotal += usage.ru_maxrss;
                         pthread_exit(0);
@@ -137,9 +142,12 @@ void * juiz(void * arg)
         }
         if (DEBUGMUTEX) imprimeMutexLocked(); // debug de mutexes
 
-
+        int contArrive = 1;
         for (ciclista * p = cab->prox; p != cab; p = p->prox) {
             p->Continue = 1;
+            if (contArrive%10000 == 0)
+                fprintf(stderr, "contArrive: %d\n", contArrive);
+            contArrive++;
         }
     }
 }
@@ -214,7 +222,9 @@ void eliminaCiclista(ciclista *c, int nCiclista) {
         anterior = q;
     }
     pista[q->py][q->px] = NULL;
+    pthread_mutex_lock(&mutexInsere);
     InsereCiclistaRank(rankFinal, q->num, tempo);
+    pthread_mutex_unlock(&mutexInsere);
     pthread_cancel(q->id);
     // Remover da lista de threads
     anterior->prox = q->prox;
