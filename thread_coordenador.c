@@ -30,8 +30,14 @@ extern Rank rankQuebras;
 extern bool ultimasVoltas;
 extern bool ciclistaQuebrou;
 
+extern long memTotal;
+
 void * juiz(void * arg)
 {
+    //Lê informações de memória e tempo
+    struct rusage usage;
+    getrusage(RUSAGE_THREAD, &usage);
+
     ciclista *c = (ciclista *) arg;
 
     /*Flags auxiliares*/
@@ -84,6 +90,9 @@ void * juiz(void * arg)
                     nEliminados++;
                     if (nCiclistasAtivos == 0) { // Fim da prova
                         ajustaPrimeiroColocado(rankFinal, vencedor);
+                        //Lê informações de memória e tempo antes do exit
+                        getrusage(RUSAGE_THREAD, &usage);
+                        memTotal += usage.ru_maxrss;
                         pthread_exit(0);
                     }
                 }

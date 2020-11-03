@@ -26,11 +26,18 @@ extern Rank rankQuebras;
 extern bool ultimasVoltas;
 extern bool ciclistaQuebrou;
 
+extern long memTotal;
+
 void * competidor(void * arg)
 {
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = NSLEEP;
+
+    // lê uso de memoria
+    struct rusage usage;
+    getrusage(RUSAGE_THREAD, &usage);
+    memTotal += usage.ru_maxrss;
 
     ciclista *p = (ciclista *) arg;
 

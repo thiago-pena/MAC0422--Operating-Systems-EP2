@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
     // malloc
@@ -37,9 +39,22 @@ ListaRank L;
 Rank rankFinal;
 Rank rankQuebras;
 
+long memTotal;
+
 void destroiPista();
+double elapsedTime(struct timeval a,struct timeval b);
 
 int main(int argc, char const *argv[]) {
+
+    // Caso flag benchmark captura informações de tempo e memória
+    struct rusage usage;
+    struct timeval ini, end, iniS, endS;
+    if (argc > 3 && !strcmp("-benchmark",argv[3])) {
+      getrusage(RUSAGE_SELF, &usage);
+      ini = usage.ru_utime;
+      iniS = usage.ru_stime;
+    }
+
     srand(SEED); // seed da bib rand
 
     d = atoi(argv[1]);
@@ -164,6 +179,22 @@ int main(int argc, char const *argv[]) {
     DestroiRank(rankFinal);
     DestroiRank(rankQuebras);
     free(cab);
+    //Grava no final informações de benchmark em arquivo .txt
+    if (argc > 3 && !strcmp("-benchmark",argv[3])) {
+      getrusage(RUSAGE_SELF, &usage);
+      memTotal += usage.ru_maxrss;
+      printf("Uso de memória: %ld kilobytes\n", memTotal);
+      end = usage.ru_utime;
+      endS = usage.ru_stime;
+      FILE *fp;
+      fp = fopen ("benchmark.txt","a");
+      if (fp!=NULL)
+      {
+        fprintf(fp,"%02d %1.3lf %1.3lf %ld\n",atoi(argv[4]),elapsedTime(ini, end), elapsedTime(iniS, endS), memTotal);
+        fclose (fp);
+      }
+    }
+
     return 0;
 }
 
@@ -172,4 +203,13 @@ void destroiPista() {
         free(pista[i]);
     }
     free(pista);
+}
+
+/*Calcula o tempo na struct timeval*/
+double elapsedTime(struct timeval a,struct timeval b)
+{
+    long seconds = b.tv_sec - a.tv_sec;
+    long microseconds = b.tv_usec - a.tv_usec;
+    double elapsed = seconds + (double)microseconds/1000000;
+    return elapsed;
 }
