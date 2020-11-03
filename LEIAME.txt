@@ -1,0 +1,80 @@
+MAC0422 - Sistemas Operacionais (2020)
+
+EP2 - Segundo Semestre de 2020
+
+Nome: Pedro Fernandes
+NUSP: 5948611
+
+Nome: Thiago Benitez Pena
+NUSP: 6847829
+
+1.CONTEÚDO_____________________________________________________________________
+
+    Conteúdo do arquivo "ep1-pedro.thiago.tar.gz"
+
+    Makefile
+    README.md
+    ep2.c
+    fila.c
+    fila.h
+    rank.c
+    rank.h
+    thread_ciclista.c
+    thread_ciclista.h
+    thread_coordenador.c
+    thread_coordenador.h
+    tools.c
+    tools.h
+
+2.INSTRUÇÕES___________________________________________________________________
+
+  Observações inicias:
+
+          A máquina cujo programa será executado dever ser compatível com
+          as principais funções GNU/Linux em especial as referidas pela
+          definição _GNU_SOURCE e as bibliotecas:
+
+		stdio.h
+		stdlib.h
+ 		pthread.h
+ 		stdbool.h
+		unistd.h
+		sys/resource.h>
+		sys/time.h
+		errno.h
+		unistd.h
+		stdbool.h
+
+
+  1.1 Para gerar os códigos binários abrir pasta desempacotada no shell e
+      digitar "make"
+
+          Exemplo: ~/dir1/dir2 >$ make
+
+  1.2 Para rodar o binário digitar "./ep1 d n" sendo d a distancia da pista 
+      desejada e n o número de ciclista entre 5 a 5 x d.
+
+          Exemplo: ~/dir1/dir2 >$ ./ep1 250 500
+
+  1.3 Para saida de erro digitar "./ep1 d n 2> "nome_do_arquivo_de_erro"
+  
+  	  Exemplo: ~/dir1/dir2 >$ ./ep1 250 500 2>stderr.txt	
+  	  
+  1.4 Para gerar um .txt adicional com informação de tempo de usuário, sistema
+      e uso de memória, digitar "./ep1 d n -benchmark "numero_qualquer"
+      
+          Exemplo: ~/dir1/dir2 >$ ./ep1 250 500 -benchmark 1	
+          
+      a saída do benchmark.txt tera fila de 4 números correspondendo a numero 
+      de índice qualquer, tempo de usuário, tempo de sistema e uso de memória
+      respectivamente.
+
+3.REFERÊNCIAS__________________________________________________________________
+
+   Várias referencias de uso das biblioteca pthread.h, time.h
+   e sys/.... .h inspiradas mas não copiadas das notas de
+   aula e sites:
+
+              - https://pt.stackoverflow.com/
+              - https://man7.org/
+              - https://linux.die.net/
