@@ -47,13 +47,16 @@ int main(int argc, char const *argv[]) {
     // Caso flag benchmark captura informações de tempo e memória
     struct rusage usage;
     struct timeval ini, end, iniS, endS;
-    if (argc > 3 && !strcmp("-benchmark", argv[3])) {
-      clock_gettime(CLOCK_REALTIME, &iniR);
-      getrusage(RUSAGE_SELF, &usage);
-      ini = usage.ru_utime;
-      iniS = usage.ru_stime;
+    if (argc > 3) {
+        if (strcmp("-d", argv[3]) == 0)
+            debugParameter = 1;
+        else if (strcmp("-benchmark", argv[3]) == 0) {
+            clock_gettime(CLOCK_REALTIME, &iniR);
+            getrusage(RUSAGE_SELF, &usage);
+            ini = usage.ru_utime;
+            iniS = usage.ru_stime;
+        }
     }
-
 
     d = atoi(argv[1]);
     n = atoi(argv[2]);

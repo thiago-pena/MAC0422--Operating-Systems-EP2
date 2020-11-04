@@ -13,14 +13,14 @@ e, ao inv ́es de mostrar as suas colocac ̧ ̃oes, deve ser informada a volta e
 eles quebraram.
 
 
--------------------- OK acima --------------------
-
-
 *Opção de DEBUG
 Seu programa deve ainda permitir uma opc ̧ ̃ao dedebugque informa a cada 60ms
 (e 20ms nas duas ́ultimas voltas, caso algu ́em pedale a 90Km/h) o status de cada
 posic ̧ ̃ao da pista, ou seja, o identificadordo(s) ciclista(s) naquela posic ̧ ̃ao
 ou a informac ̧ ̃ao de que n ̃ao h ́a nenhum ciclista ali.
+
+-------------------- OK acima --------------------
+
 
 OBS:
 N ̃ao h ́a um formato padr ̃aoparaasa ́ıda do seu programa.
