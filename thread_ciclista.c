@@ -1,7 +1,6 @@
 #include "thread_ciclista.h"
 #include "rank.h"
 
-#define DEBUG 0
 #define NSLEEP 10
 #define PROB_QUEBRA 0.05
 
@@ -146,7 +145,7 @@ void tratalinhaDechegada(ciclista *p) {
             nCiclistasAtivos--;
             p->quebrou = true;
             quebrou = true;
-            if (DEBUG) printf("Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
+            printf("Quebra! O ciclista %d quebrou na volta %d.\n", p->num, p->voltas);
         }
     }
     if (!quebrou) {

@@ -31,6 +31,7 @@ Rank rankFinal;
 Rank rankQuebras;
 ListaRank L;
 long memTotal;
+int debugParameter = 0;
 
 void destroiPista();
 double elapsedTime(struct timeval a,struct timeval b);
@@ -154,10 +155,11 @@ int main(int argc, char const *argv[]) {
         exit(1);
     }
 
-    printf("Rank final\n");
+    printf("\n====================== Fim da corrida ======================\n\n");
+    printf("--------- Ranqueamento final dos ciclistas ---------\n");
     imprimeRankFinal(rankFinal);
     if (nQuebras > 0) {
-        printf("\nRank de quebras\n");
+        printf("--------- Ciclistas que quebraram ---------\n");
         imprimeRankQuebras(rankQuebras);
     }
     else

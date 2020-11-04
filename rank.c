@@ -105,9 +105,9 @@ void imprimeRank(ListaRank L, int volta) {
         printf("ERRO! Volta não encontrada na lista de ranks. (volta %d)\n", volta);
         return;
     }
-    printf("Ciclic\tPos\tTempo\n");
+    printf("Ciclic\tPos\tTempo (ms)\n");
     for (int i = 0; i < R->n; i++) {
-        printf("%d\t%d\t%d\n", R->nCiclista[i], i+1, R->t[i]);
+        printf("%d\t\t%d\t%d\n", R->nCiclista[i], i+1, R->t[i]);
     }
     printf("\n");
 }
@@ -144,7 +144,7 @@ void imprimeRankFinal(Rank R) {
 void imprimeRankQuebras(Rank R) {
     printf("Ciclic\tVolta da quebra\n");
     for (int i = R->n - 1; i >= 0; i--) {
-        printf("%d\t%d\n", R->nCiclista[i], R->t[i]);
+        printf("%d\t\t%d\n", R->nCiclista[i], R->t[i]);
     }
     printf("\n");
 }

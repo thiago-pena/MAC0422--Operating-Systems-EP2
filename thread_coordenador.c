@@ -23,6 +23,7 @@ extern ListaRank L;
 extern Rank rankFinal;
 extern Rank rankQuebras;
 extern long memTotal;
+extern int debugParameter;
 
 void * juiz(void * arg)
 {
@@ -66,11 +67,15 @@ void * juiz(void * arg)
                     vencedor = primeiroColocado(L, maiorVolta);
                     eliminaCiclista(c, vencedor);
                     nCiclistasAtivos--;
-                    printf("O ciclista %d venceu a corrida!!! \\o/\n", vencedor);
+                    printf("O ciclista %d venceu a corrida!!! \\o/\n\n", vencedor);
                     vencedorTerminouProva = true;
             }
             while (minVolta > 0 && ultimaVoltaDeEliminacao < minVolta) {
-                if (nCiclistasAtivos > 1) imprimeStderrRank(L, ultimaVoltaDeEliminacao);
+                if (ultimaVoltaDeEliminacao > 0 && nCiclistasAtivos > 1) {
+                    printf("\n------------- Volta %d completada. -------------\n", ultimaVoltaDeEliminacao);
+                    printf("Posicoes dos ciclistas na volta %d:\n", ultimaVoltaDeEliminacao);
+                    imprimeRank(L, ultimaVoltaDeEliminacao);
+                }
                 ultimaVoltaDeEliminacao++;
                 if (ultimaVoltaDeEliminacao%2 == 0) {
                     int ultimo = ultimoColocado(L, ultimaVoltaDeEliminacao);
@@ -78,7 +83,9 @@ void * juiz(void * arg)
                     nCiclistasAtivos--;
                     if (nCiclistasAtivos == 0) { // Fim da prova
                         ajustaPrimeiroColocado(rankFinal, vencedor);
-                        imprimeStderrRank(L, ultimaVoltaDeEliminacao);
+                        printf("\n------------- Volta %d completada. -------------\n", ultimaVoltaDeEliminacao);
+                        printf("Posicoes dos ciclistas na volta %d:\n", ultimaVoltaDeEliminacao);
+                        imprimeRank(L, ultimaVoltaDeEliminacao);
                         getrusage(RUSAGE_THREAD, &usage);
                         memTotal += usage.ru_maxrss;
                         pthread_exit(0);
@@ -107,7 +114,7 @@ void * juiz(void * arg)
             }
             if (tem90) tempo += 20;
             else tempo += 60;
-            if (DEBUGVIEW) visualizador();
+            if (debugParameter) visualizador();
             if (ultimaVoltaDeEliminacao > 0)
                 L = RemoveRanksVolta(L, ultimaVoltaDeEliminacao);
         }
@@ -118,7 +125,7 @@ void * juiz(void * arg)
     }
 }
 
-
+// Imprime a visualização da pista na saída padrão
 void visualizador()
 {
     for (int j = 0; j < d; j++) {
@@ -146,6 +153,8 @@ void visualizador()
     }
     printf("\n\n");
 }
+
+// Imprime a visualização da pista na saída de erros
 void visualizadorStderr()
 {
     for (int j = 0; j < d; j++) {
