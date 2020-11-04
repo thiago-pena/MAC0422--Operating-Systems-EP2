@@ -11,7 +11,7 @@
 #include <sys/time.h>
 #include "tools.h"
 
-/*Estrutura correspondente a um ciclista*/
+/* Estrutura correspondente a um ciclista */
 typedef struct Ciclista ciclista;
 struct Ciclista {
     int num;

@@ -2,109 +2,98 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-    // malloc
-    // fprintf
 #include <pthread.h>
 #include <time.h>
 #include <errno.h>
 #include <unistd.h>
-    // sleep
 #include <stdbool.h>
 #include <string.h>
-    // strcmp
 #include "thread_ciclista.h"
 #include "thread_coordenador.h"
 #include "rank.h"
-
-#define TRUE 1
-#define DEBUG 0
-#define SEED 3
-
 
 /* Variáveis globais */
 ciclista ***pista;
 ciclista *cab;
 int d, n;
-_Atomic int nCiclistasAtivos, nEliminados, nQuebras;
+int dt_base = 2;
+_Atomic int nCiclistasAtivos, nQuebras;
 int nVoltasTotal;
-bool ultimasVoltas;
-bool tem90;
-int nCiclista90 = -1; // Número do ciclista que vai pedalar a 90km/h
-bool esperandoSegundoUltimasVoltas = false;
-int dt_base = 2; // base do delta de velocidade (2 padrão, 3 se tiver ciclista a 90km/h)
 bool ciclistaQuebrou;
-pthread_mutex_t mutex;
+bool ultimasVoltas = false; // Indica que um ciclista começou as duas últimas voltas
+bool tem90 = false; // Indica se algum ciclista vai pedalar a 90km/h
+int nCiclista90 = -1; // Número do ciclista que vai pedalar a 90km/h
+bool esperandoSegundoUltimasVoltas = false; // Esperando o segundo nas últimas voltas para pedalar a 90km/h
+_Atomic long long int tempo = 0;
+pthread_mutex_t **mutex;
 pthread_mutex_t mutexInsere;
-pthread_mutex_t **mutex2;
-int maiorVolta, menorVolta;
-_Atomic long long int tempo = 0; // A primeira iteração ocorre primeiro nas threads, depois o coordenador incrementa o tempo
-ListaRank L;
 Rank rankFinal;
 Rank rankQuebras;
-
+ListaRank L;
 long memTotal;
 
 void destroiPista();
 double elapsedTime(struct timeval a,struct timeval b);
 double elapsedTime2(struct timespec a,struct timespec b);
 
-int main(int argc, char const *argv[]) {
 
-    /*Inicializa o tempo real*/
-    struct timespec  iniR, endR;
+int main(int argc, char const *argv[]) {
+    srand(time(NULL));
+
+    /* Inicializa o tempo real */
+    struct timespec iniR, endR;
 
     // Caso flag benchmark captura informações de tempo e memória
     struct rusage usage;
     struct timeval ini, end, iniS, endS;
-    if (argc > 3 && !strcmp("-benchmark",argv[3])) {
+    if (argc > 3 && !strcmp("-benchmark", argv[3])) {
       clock_gettime(CLOCK_REALTIME, &iniR);
       getrusage(RUSAGE_SELF, &usage);
       ini = usage.ru_utime;
       iniS = usage.ru_stime;
     }
 
-    srand(SEED); // seed da bib rand
 
     d = atoi(argv[1]);
     n = atoi(argv[2]);
+
+    /* Inicialização de variáveis */
     nCiclistasAtivos = n;
-    nEliminados = nQuebras = 0;
+    nQuebras = 0;
     nVoltasTotal = 2*n - 2;
-    ultimasVoltas = false;
-    tem90 = false;
-    if (n <= 2) ultimasVoltas = true;
-    pthread_mutex_init(&mutex, NULL);
+
+    /* Inicialização do mutex de ranks */
     pthread_mutex_init(&mutexInsere, NULL);
 
-    // Cria lista de Ranks por volta
+    /* Cria lista de Ranks por volta */
     L = CriaListaRank();
-    // Cria lista de Rank final
+    /* Cria lista de Rank final */
     rankFinal = CriaRank(0, n);
     rankQuebras = CriaRank(0, n);
 
-    /*Cria pista como uma matriz de ponteiros*/
+    /* Cria pista como uma matriz de ponteiros e uma matriz de mutex para ela */
     pista = malloc(10 * sizeof(ciclista**));
-    mutex2 = malloc(10 * sizeof(pthread_mutex_t *));
+    mutex = malloc(10 * sizeof(pthread_mutex_t *));
     for (int i = 0; i < 10; i++) {
         pista[i] = malloc(d * sizeof(ciclista*));
-        mutex2[i] = malloc(d * sizeof(mutex));
+        mutex[i] = malloc(d * sizeof(pthread_mutex_t));
     }
 
-    /*Declara posições da pista vazias como NULLs*/
+    /* Inicializa pista e seus mutexes */
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < d; j++) {
             pista[i][j] = NULL;
-            pthread_mutex_init(&mutex2[i][j], NULL);
+            pthread_mutex_init(&mutex[i][j], NULL);
         }
     }
 
-    /*Cria os ciclistas e posiciona-os na pista*/
+    /* Cria os ciclistas e posiciona-os na pista */
     cab = malloc(sizeof(ciclista));
     cab->prox = cab;
     int q = n/5;
     int r = n%5;
     int numComp = 1;
-    if (q > 0 && r == 0) { q--;r = 5;} /*Conserta caso r == 0*/
+    if (q > 0 && r == 0) { q--; r = 5;} /* Conserta caso r == 0 */
     for (int j = 0; j < q; j++) {
         for(int i = 0; i < 5; i++) {
             ciclista *novoCiclista;
@@ -150,7 +139,7 @@ int main(int argc, char const *argv[]) {
         cab->prox = novoCiclista;
     }
     //visualizador();
-    /*Cria thread coordenadora de threads*/
+    /* Cria thread coordenadora de threads */
     pthread_t coord;
     if (pthread_create(&coord, NULL, juiz, (void*) cab)) {
         printf("\n ERROR creating thread juiz\n");
@@ -165,7 +154,7 @@ int main(int argc, char const *argv[]) {
 
     for (ciclista * p = cab->prox; p != cab; p = p->prox) {
       if (pthread_join(p->id, NULL)) {
-          printf("\n ERROR joining thread %ld\n",p->id);
+          printf("\n ERROR joining thread %ld\n", p->id);
           exit(1);
       }
     }
@@ -177,18 +166,21 @@ int main(int argc, char const *argv[]) {
 
     printf("Rank final\n");
     imprimeRankFinal(rankFinal);
-    printf("\nRank de quebras\n");
-    imprimeRankQuebras(rankQuebras);
+    if (nQuebras > 0) {
+        printf("\nRank de quebras\n");
+        imprimeRankQuebras(rankQuebras);
+    }
+    else
+        printf("Nenhum ciclista quebrou.\n");
     printf("Fim do ep\n");
 
-    pthread_mutex_destroy(&mutex);
     pthread_mutex_destroy(&mutexInsere);
     destroiPista();
     DestroiListaRank(L);
     DestroiRank(rankFinal);
     DestroiRank(rankQuebras);
     free(cab);
-    //Grava no final informações de benchmark em arquivo .txt
+    /* Grava no final informações de benchmark em arquivo .txt */
     if (argc > 3 && !strcmp("-benchmark",argv[3])) {
       clock_gettime(CLOCK_REALTIME, &endR);
       getrusage(RUSAGE_SELF, &usage);
@@ -215,7 +207,7 @@ void destroiPista() {
     free(pista);
 }
 
-/*Calcula o tempo na struct timeval*/
+/* Calcula o tempo na struct timeval */
 double elapsedTime(struct timeval a,struct timeval b)
 {
     long seconds = b.tv_sec - a.tv_sec;
