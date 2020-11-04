@@ -4,21 +4,15 @@
 
 make
 
-for i in {1..30}
+for i in `seq 1 30`
 do
-   ./ep2 1200 1200 -benchmark $i command >output$i.txt  2>stderr$i.txt
-   rm output.txt
-   rm stderr.txt
+    ./ep2 250 300 -benchmark $i
 done
-for i in {1..30}
+for i in `seq 1 30`
 do
-  ./ep2 1200 5 -benchmark $i command >output.txt  2>stderr.txt
-  rm output.txt
-  rm stderr.txt
+    ./ep2 500 300 -benchmark $i
 done
-for i in {1..30}
+for i in `seq 1 30`
 do
-   ./ep2 1200 6000 -benchmark $i command >output.txt  2>stderr.txt
-   rm output.txt
-   rm stderr.txt
+    ./ep2 1000 300 -benchmark $i
 done
