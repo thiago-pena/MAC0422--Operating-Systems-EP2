@@ -105,14 +105,9 @@ int main(int argc, char const *argv[]) {
             novoCiclista->px = d -1 -j;
             novoCiclista->py = i;
             novoCiclista->voltas = -1;
-            novoCiclista->ultimo = 0;
-            novoCiclista->eliminado = 0;
             novoCiclista->roundFeito = false;
             novoCiclista->velocidade = 1;
             novoCiclista->quebrou = false;
-            novoCiclista->linhaDeChegada = false;
-            novoCiclista->eliminar = false;
-            novoCiclista->vel90 = false;
             novoCiclista->prox = cab->prox;
             cab->prox = novoCiclista;
         }
@@ -127,14 +122,9 @@ int main(int argc, char const *argv[]) {
         novoCiclista->px = d -1 -q;
         novoCiclista->py = i;
         novoCiclista->voltas = -1;
-        novoCiclista->ultimo = 0;
-        novoCiclista->eliminado = 0;
         novoCiclista->roundFeito = false;
         novoCiclista->velocidade = 1;
         novoCiclista->quebrou = false;
-        novoCiclista->linhaDeChegada = false;
-        novoCiclista->eliminar = false;
-        novoCiclista->vel90 = false;
         novoCiclista->prox = cab->prox;
         cab->prox = novoCiclista;
     }

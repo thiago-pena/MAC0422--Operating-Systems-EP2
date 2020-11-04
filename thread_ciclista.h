@@ -21,25 +21,30 @@ struct Ciclista {
     int voltas;
     int velocidade; // 1: 30km/h, 2: 60km/h; 3: 90km/h
     int dt;
-    int ultimo;
-    int eliminado;
     pthread_t id;
     ciclista *prox;
     bool roundFeito; // cada ciclista indica se seu round já está completo
     bool quebrou;
-    bool linhaDeChegada;
-    bool eliminar; // o ciclista deve ser eliminado assim que passar pela linha de chegada
-    bool vel90; // marca o ciclista para ter 90km/h nas 2 últimas voltas
 };
 
-
+// Função da thread dos ciclistas
 void * competidor(void * arg);
+
+// Define a velocidade do ciclista
 void velocidade(ciclista *p);
+
+// Anda pra frente
 void moveFrente(ciclista *p);
-void moveTemp(ciclista *p);
+
+// Procura uma pista externa para avançar
+void movePistaExterna(ciclista *p);
+
+// Tratamento do ciclista na linha de chegada. Faz sorteio para ver se ele vai
+// quebrar, se quebrar, ativa a flag p->quebrou. Caso contrário, insere-o no
+// rank da volta completada e recalcula sua velocidade.
 void tratalinhaDechegada(ciclista *p);
+
+// Ao fim de sua movimentação, o ciclista trata de ir para a pista mais interna possível
 void movePistaInterna(ciclista *p);
-void movePistaInterna2(ciclista *p);
-int mod(int a, int b);
 
 #endif
