@@ -16,8 +16,6 @@ NUSP: 6847829
     apresentação.pdf
     LEIAME
     ep2.c
-    fila.c
-    fila.h
     rank.c
     rank.h
     thread_ciclista.c
@@ -57,10 +55,6 @@ NUSP: 6847829
 
           Exemplo: ~/dir1/dir2 >$ ./ep1 250 500
 
-  1.3   Para saida de erro digitar "./ep1 d n 2> "nome_do_arquivo_de_erro"
-
-  	    Exemplo: ~/dir1/dir2 >$ ./ep1 250 500 2>stderr.txt
-
   1.4.1 Para rodar o programa no formato debug, inserir a flag -d no final
         digitando "./ep1 d n -d"
 
@@ -85,3 +79,7 @@ NUSP: 6847829
               - https://pt.stackoverflow.com/
               - https://man7.org/
               - https://linux.die.net/
+
+    Utilizamos os códigos para geração de número aleatórios usados na disciplina MAC0328 - Algoritmos em Grafos, também existentes na seguinte página do professor Paulo Feofiloff:
+              - https://www.ime.usp.br/~pf/algoritmos/aulas/random.html
+
