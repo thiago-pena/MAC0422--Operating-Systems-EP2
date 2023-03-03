@@ -1,39 +1,87 @@
-# so-ep2
+# MAC0422 - Operating Systems / Sistemas Operacionais (2020)
+Undergraduate subject of the Bachelor's Degree in Computer Science at IME-USP.
 
-Link da apresentação:
-https://docs.google.com/presentation/d/1xRl5Mm4w-hyP7T1xzA5vDjIK1Wc0GqihGoLxspg3UN4/edit#slide=id.g53c4c165e2_0_6
-------------------------------------------------------------------------------------------------
-Alterações do commit "Diversas modificações - ver README"
-*Separação do ep2.c nos seguintes arquivos:
-    *ep2.c agora só contém a main e a declaração de variáveis globais
-    *as demais funções que estavam em ep2.c foram passadas para:
-        *threads.c:
-            *contém as funções das threads e do coordenador
-            *contém também algumas poucas funções (depois eu quero organizar melhor)
+View [course description](https://uspdigital.usp.br/jupiterweb/obterDisciplina?nomdis=&sgldis=mac0422).
 
-*Adicão de novos arquivos:
-    *tools.c: contém as funções de cálculo de probabilidades do PF
-    *rank.c: contém uma estrutura de dados para armazenar as listas com as posições
-             dos ciclistas a cada volta.
+## EP2 - Segundo Semestre de 2020
 
-*Implementações diversas
-    *Regras de ultrapassagem
-    *Eliminação do último colocado a cada 2 voltas (tomando como referência a volta
-     do ciclistas mais lento -> a confirmar se está correto)
-        A eliminação de um ciclista inclui:
-            (1) Remoção da marcação do ciclista na pista
-            (2) Remoção da thread da lista ligada circular de threads
-            (3) Inserção do ciclista no rank final
-            (4) Interrupção definitiva da execução da thread com 'pthread_cancel'
-    *contagem do tempo (por enquanto é a contagem de iterações)
-    *alterei a volta inicial de -1 para 0, para que as eliminações ocorram em
-     voltas pares.
-    *Criação de uma estrutura de dados para armazenar as posições a cada volta,
-     com os tempos em que um ciclista cruzou a linha de chegada e a posição dele.
-    *Essa mesma estrutura também serve para guardar as posições finais de cada
-     ciclista.
+Name | nUSP
+--- | ---
+[Pedro Fernandes](https://github.com/Pedro84skynet) | 5948611
+[Thiago Benitez Pena](https://github.com/thiago-pena) | 6847829
 
-*OBS: como tem dependências no Makefile, é melhor remover o 'ep2' sempre que for
-      dar make, pois como não ajustei o Makefile, ele acha que o executável
-      está atualizado, mesmo que não esteja.
-*OBS2: Não me preocupei muito com free's por enquanto.
+## 1.CONTEÚDO
+
+    Conteúdo do arquivo "ep1-pedro.thiago.tar.gz"
+
+    Makefile
+    apresentação.pdf
+    LEIAME
+    ep2.c
+    rank.c
+    rank.h
+    thread_ciclista.c
+    thread_ciclista.h
+    thread_coordenador.c
+    thread_coordenador.h
+    tools.c
+    tools.h
+
+## 2.INSTRUÇÕES
+
+  Observações inicias:
+
+          A máquina cujo programa será executado dever ser compatível com
+          as principais funções GNU/Linux em especial as referidas pela
+          definição _GNU_SOURCE e as bibliotecas:
+
+		stdio.h
+		stdlib.h
+ 		pthread.h
+ 		stdbool.h
+		unistd.h
+		sys/resource.h>
+		sys/time.h
+		errno.h
+		unistd.h
+		stdbool.h
+
+
+  ### 1.1   Para gerar os códigos binários abrir pasta desempacotada no shell e
+        digitar "make"
+
+          Exemplo: ~/dir1/dir2 >$ make
+
+  ### 1.2   Para rodar o binário digitar "./ep1 d n" sendo d a distancia da pista
+        desejada e n o número de ciclista entre 5 a 5 x d.
+
+          Exemplo: ~/dir1/dir2 >$ ./ep1 250 500
+
+  #### 1.4.1 Para rodar o programa no formato debug, inserir a flag -d no final
+        digitando "./ep1 d n -d"
+
+        Exemplo: ~/dir1/dir2 >$ ./ep1 250 500 -d
+
+  #### 1.4.2 Para gerar um .txt adicional com informação de tempo real, tempo de
+        usuário, tempo de sistema e uso de memória, digitar "./ep1 d n
+        -benchmark "numero_qualquer"
+
+          Exemplo: ~/dir1/dir2 >$ ./ep1 250 500 -benchmark 1
+
+        a saída do benchmark.txt tera fila de 5 números correspondendo a numero
+        de índice qualquer, tempo real (relógio), tempo de usuário, tempo de
+        sistema e uso de memória respectivamente.
+
+## 3.REFERÊNCIAS
+
+   Várias referencias de uso das biblioteca pthread.h, time.h
+   e sys/.... .h inspiradas mas não copiadas das notas de
+   aula e sites:
+
+              - https://pt.stackoverflow.com/
+              - https://man7.org/
+              - https://linux.die.net/
+
+    Utilizamos os códigos para geração de número aleatórios usados na disciplina MAC0328 - Algoritmos em Grafos, também existentes na seguinte página do professor Paulo Feofiloff:
+              - https://www.ime.usp.br/~pf/algoritmos/aulas/random.html
+
